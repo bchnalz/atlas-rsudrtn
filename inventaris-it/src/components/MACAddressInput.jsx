@@ -128,7 +128,7 @@ export default function MACAddressInput({ value, onChange, placeholder = '00:00:
 
   return (
     <div className="relative">
-      <div className="flex items-center gap-1 bg-white border border-gray-300 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+      <div className="flex items-center gap-0.5 bg-gray-950 border border-gray-800 rounded-lg px-2 py-1.5 focus-within:ring-2 focus-within:ring-gray-600 focus-within:border-transparent">
         {segments.map((segment, index) => (
           <div key={index} className="flex items-center">
             <input
@@ -138,11 +138,11 @@ export default function MACAddressInput({ value, onChange, placeholder = '00:00:
               onChange={(e) => handleChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
               onPaste={index === 0 ? handlePaste : undefined}
-              className="w-8 text-center bg-transparent border-none outline-none text-base font-mono uppercase"
+              className="w-6 text-center bg-transparent border-none outline-none text-xs font-mono uppercase text-white placeholder-gray-600"
               placeholder={placeholder.split(':')[index]}
               maxLength={2}
             />
-            {index < 5 && <span className="text-gray-400 font-mono">:</span>}
+            {index < 5 && <span className="text-gray-600 font-mono text-xs">:</span>}
           </div>
         ))}
         
@@ -150,10 +150,10 @@ export default function MACAddressInput({ value, onChange, placeholder = '00:00:
           <button
             type="button"
             onClick={handleClear}
-            className="ml-2 text-gray-400 hover:text-gray-600 transition"
+            className="ml-1 text-gray-500 hover:text-white transition"
             title="Clear"
           >
-            ×
+            <span className="text-xs">×</span>
           </button>
         )}
       </div>

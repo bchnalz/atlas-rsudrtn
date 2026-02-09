@@ -126,11 +126,16 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   if (loading || checkingAccess || (profile?.role === 'standard' && !pagesLoaded)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <svg
+          className="h-6 w-6 animate-spin text-zinc-500"
+          xmlns="http://www.w3.org/2000/svg"
+          width="24" height="24" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" strokeWidth="2"
+          strokeLinecap="round" strokeLinejoin="round"
+        >
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+        </svg>
       </div>
     );
   }
@@ -147,13 +152,13 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     };
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-lg max-w-md w-full text-center">
           <div className="text-blue-500 text-5xl mb-4">👋</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+          <h2 className="text-2xl font-bold text-zinc-100 mb-2">
             Selamat Datang!
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-zinc-400 mb-6">
             Akun Anda belum memiliki kategori pengguna. Silakan hubungi administrator untuk mendapatkan akses.
           </p>
           <div className="flex gap-3 justify-center">
@@ -180,13 +185,13 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   // Only show access denied if explicitly false (not null/undefined)
   if (hasAccess === false) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="bg-zinc-900 border border-zinc-800 p-8 rounded-lg max-w-md w-full text-center">
           <div className="text-red-500 text-5xl mb-4">🚫</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+          <h2 className="text-2xl font-bold text-zinc-100 mb-2">
             Akses Ditolak
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-zinc-400 mb-6">
             Anda tidak memiliki izin untuk mengakses halaman ini.
           </p>
           <div className="flex gap-3 justify-center">

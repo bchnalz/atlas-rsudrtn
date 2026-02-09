@@ -4,6 +4,7 @@ import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { MagnifyingGlassPlusIcon } from '@heroicons/react/24/outline';
+import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 
 const DaftarTugas = () => {
   const { user } = useAuth();
@@ -14,6 +15,9 @@ const DaftarTugas = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [completionNotes, setCompletionNotes] = useState('');
+  const [activeTab, setActiveTab] = useState('in_progress');
+  const [isDetailClosing, setIsDetailClosing] = useState(false);
+  const [isCompleteClosing, setIsCompleteClosing] = useState(false);
   const [elapsedTime, setElapsedTime] = useState({});
   const timerIntervalRef = useRef({});
 
@@ -55,13 +59,10 @@ const DaftarTugas = () => {
   useEffect(() => {
     const handleEscKey = (event) => {
       if (event.key === 'Escape') {
-        if (showDetailModal) {
-          setShowDetailModal(false);
-          setSelectedTask(null);
-        } else if (showCompleteModal) {
-          setShowCompleteModal(false);
-          setSelectedTask(null);
-          setCompletionNotes('');
+        if (showDetailModal && !isDetailClosing) {
+          handleCloseDetail();
+        } else if (showCompleteModal && !isCompleteClosing) {
+          handleCloseComplete();
         }
       }
     };
@@ -72,7 +73,7 @@ const DaftarTugas = () => {
         document.removeEventListener('keydown', handleEscKey);
       };
     }
-  }, [showDetailModal, showCompleteModal]);
+  }, [showDetailModal, showCompleteModal, isDetailClosing, isCompleteClosing]);
 
   const fetchTasks = async () => {
     if (!user?.id) {
@@ -416,6 +417,25 @@ const DaftarTugas = () => {
     }
   };
 
+  const handleCloseDetail = () => {
+    setIsDetailClosing(true);
+    setTimeout(() => {
+      setShowDetailModal(false);
+      setSelectedTask(null);
+      setIsDetailClosing(false);
+    }, 150);
+  };
+
+  const handleCloseComplete = () => {
+    setIsCompleteClosing(true);
+    setTimeout(() => {
+      setShowCompleteModal(false);
+      setSelectedTask(null);
+      setCompletionNotes('');
+      setIsCompleteClosing(false);
+    }, 150);
+  };
+
   const getStatusBadge = (status) => {
     const badges = {
       pending: 'bg-yellow-100 text-yellow-800',
@@ -501,7 +521,7 @@ const DaftarTugas = () => {
     return (
       <Layout>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
         </div>
       </Layout>
     );
@@ -509,156 +529,150 @@ const DaftarTugas = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Daftar Tugas</h1>
-            <p className="mt-1 text-sm text-gray-400">
-              Kelola tugas yang diberikan kepada Anda
-            </p>
-          </div>
-          <button
-            onClick={() => fetchTasks()}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition flex items-center gap-2"
-            title="Refresh tasks"
-          >
-            🔄 Refresh
-          </button>
-        </div>
-
+      <div className="space-y-3 text-[11px]" style={{ fontFamily: "'Open Sans', sans-serif" }}>
         {/* Detail Modal */}
         {showDetailModal && selectedTask && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full p-6 my-8 max-h-[90vh] overflow-y-auto">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Detail Tugas
-              </h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-600">No. Tugas</p>
-                  <p className="text-lg font-mono font-bold text-orange-500">{selectedTask.task_number}</p>
-                </div>
-
-                <div>
-                  <p className="text-sm text-gray-600">Judul</p>
-                  <p className="text-lg font-semibold text-gray-900">{selectedTask.title}</p>
-                </div>
-
-                {selectedTask.description && (
-                  <div>
-                    <p className="text-sm text-gray-600">Deskripsi</p>
-                    <p className="text-sm text-gray-800 whitespace-pre-wrap">{selectedTask.description}</p>
+          <div
+            className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto ${
+              isDetailClosing ? 'modal-backdrop-exit' : 'modal-backdrop-enter'
+            }`}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) handleCloseDetail();
+            }}
+          >
+            <div
+              className={`bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full max-h-[90vh] md:w-[504px] my-4 md:my-8 font-['Open_Sans'] flex flex-col overflow-hidden ${
+                isDetailClosing ? 'modal-content-exit' : 'modal-content-enter'
+              }`}
+            >
+              {/* Fixed Header */}
+              <div className="flex-shrink-0 flex justify-between items-start px-4 py-3 bg-black border-b border-gray-800">
+                <div className="min-w-0">
+                  <span className="font-bold text-white text-sm">Detail Tugas</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-white font-bold text-xs font-mono">{selectedTask.task_number}</span>
+                    <span className="text-gray-600">•</span>
+                    {getStatusBadge(selectedTask.status)}
                   </div>
-                )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCloseDetail}
+                  className="flex-shrink-0 text-gray-400 hover:text-white transition text-lg font-bold leading-none ml-2"
+                  title="Tutup"
+                >
+                  ×
+                </button>
+              </div>
 
-                <div className="grid grid-cols-2 gap-4">
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto modern-scrollbar p-4">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 text-gray-100 text-xs">
+                  <div className="col-span-2">
+                    <p className="text-xs text-gray-500 mb-0.5">Judul</p>
+                    <p className="text-xs font-semibold text-white">{selectedTask.title}</p>
+                  </div>
+
+                  {selectedTask.description && (
+                    <div className="col-span-2">
+                      <p className="text-xs text-gray-500 mb-0.5">Deskripsi</p>
+                      <p className="text-xs text-gray-300 whitespace-pre-wrap">{selectedTask.description}</p>
+                    </div>
+                  )}
+
                   <div>
-                    <p className="text-sm text-gray-600">Kategori SKP</p>
-                    <p className="text-sm font-semibold">{selectedTask.skp_category?.name}</p>
+                    <p className="text-xs text-gray-500 mb-0.5">Kategori SKP</p>
+                    <p className="text-xs">{selectedTask.skp_category?.name || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Prioritas</p>
+                    <p className="text-xs text-gray-500 mb-0.5">Prioritas</p>
                     <div>{getPriorityBadge(selectedTask.priority)}</div>
                   </div>
-                </div>
 
-                {selectedTask.assigned_by_user && (
-                  <div>
-                    <p className="text-sm text-gray-600">Dari (Penugas)</p>
-                    <p className="text-sm font-semibold">{selectedTask.assigned_by_user?.full_name || selectedTask.assigned_by_user?.name || selectedTask.assigned_by_user}</p>
-                    {selectedTask.assigned_by_user?.email && (
-                      <p className="text-xs text-gray-500">{selectedTask.assigned_by_user.email}</p>
-                    )}
-                  </div>
-                )}
+                  {selectedTask.assigned_by_user && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Dari (Penugas)</p>
+                      <p className="text-xs">{selectedTask.assigned_by_user?.full_name || selectedTask.assigned_by_user?.name}</p>
+                    </div>
+                  )}
 
-                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">Dibuat</p>
-                    <p className="text-sm">{formatDate(selectedTask.created_at)}</p>
+                    <p className="text-xs text-gray-500 mb-0.5">Dibuat</p>
+                    <p className="text-xs">{formatDate(selectedTask.created_at)}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Status</p>
-                    <div>{getStatusBadge(selectedTask.status)}</div>
-                  </div>
-                </div>
 
-                {selectedTask.status === 'scheduled' && selectedTask.scheduled_for && (
-                  <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-3">
-                    <p className="text-sm text-cyan-800">
-                      ⏰ Dijadwalkan untuk: <span className="font-mono font-semibold">{formatDate(selectedTask.scheduled_for)}</span>
+                  {selectedTask.status === 'scheduled' && selectedTask.scheduled_for && (
+                    <div className="col-span-2 bg-gray-950 border border-gray-800 rounded-lg p-2.5">
+                      <p className="text-xs text-gray-300">
+                        ⏰ Dijadwalkan: <span className="font-mono font-semibold text-white">{formatDate(selectedTask.scheduled_for)}</span>
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Tombol konfirmasi/mulai muncul setelah waktu jadwal tiba.
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedTask.acknowledged_at && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Waktu Tanggapan</p>
+                      <p className="text-xs">{formatDate(selectedTask.acknowledged_at)}</p>
+                    </div>
+                  )}
+
+                  {selectedTask.started_at && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Waktu Mulai</p>
+                      <p className="text-xs">{formatDate(selectedTask.started_at)}</p>
+                    </div>
+                  )}
+
+                  {selectedTask.completed_at && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Waktu Selesai</p>
+                      <p className="text-xs">{formatDate(selectedTask.completed_at)}</p>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-xs text-gray-500 mb-0.5">Total Durasi</p>
+                    <p className="text-xs font-bold text-green-400">
+                      {(() => {
+                        if (selectedTask.total_duration_minutes && selectedTask.total_duration_minutes > 0) {
+                          return formatDuration(selectedTask.total_duration_minutes);
+                        } else if (selectedTask.assigned_at && selectedTask.completed_at) {
+                          const assignedTime = new Date(selectedTask.assigned_at);
+                          const completedTime = new Date(selectedTask.completed_at);
+                          const diffMs = completedTime.getTime() - assignedTime.getTime();
+                          const minutes = Math.floor(diffMs / 60000);
+                          return formatDuration(minutes > 0 ? minutes : 0);
+                        } else if (selectedTask.assigned_at && selectedTask.user_status === 'completed') {
+                          const assignedTime = new Date(selectedTask.assigned_at);
+                          const now = new Date();
+                          const diffMs = now.getTime() - assignedTime.getTime();
+                          const minutes = Math.floor(diffMs / 60000);
+                          return formatDuration(minutes > 0 ? minutes : 0);
+                        }
+                        return '0 menit';
+                      })()}
                     </p>
-                    <p className="text-xs text-cyan-700 mt-1">
-                      Tombol konfirmasi/mulai akan muncul setelah waktu jadwal tiba dan status berubah menjadi <span className="font-mono">pending</span>.
-                    </p>
                   </div>
-                )}
 
-                {selectedTask.acknowledged_at && (
-                  <div>
-                    <p className="text-sm text-gray-600">Waktu Tanggapan</p>
-                    <p className="text-sm">{formatDate(selectedTask.acknowledged_at)}</p>
-                  </div>
-                )}
-
-                {selectedTask.started_at && (
-                  <div>
-                    <p className="text-sm text-gray-600">Waktu Mulai</p>
-                    <p className="text-sm">{formatDate(selectedTask.started_at)}</p>
-                  </div>
-                )}
-
-                {selectedTask.completed_at && (
-                  <div>
-                    <p className="text-sm text-gray-600">Waktu Selesai</p>
-                    <p className="text-sm">{formatDate(selectedTask.completed_at)}</p>
-                  </div>
-                )}
-
-                <div>
-                  <p className="text-sm text-gray-600">Total Durasi</p>
-                  <p className="text-lg font-bold text-green-600">
-                    {(() => {
-                      // Use stored duration if available, otherwise calculate from timestamps
-                      if (selectedTask.total_duration_minutes && selectedTask.total_duration_minutes > 0) {
-                        return formatDuration(selectedTask.total_duration_minutes);
-                      } else if (selectedTask.assigned_at && selectedTask.completed_at) {
-                        // Calculate from assigned_at to completed_at
-                        const assignedTime = new Date(selectedTask.assigned_at);
-                        const completedTime = new Date(selectedTask.completed_at);
-                        const diffMs = completedTime.getTime() - assignedTime.getTime();
-                        const minutes = Math.floor(diffMs / 60000);
-                        return formatDuration(minutes > 0 ? minutes : 0);
-                      } else if (selectedTask.assigned_at && selectedTask.user_status === 'completed') {
-                        // Task is completed but duration not set, calculate from assigned_at to now
-                        const assignedTime = new Date(selectedTask.assigned_at);
-                        const now = new Date();
-                        const diffMs = now.getTime() - assignedTime.getTime();
-                        const minutes = Math.floor(diffMs / 60000);
-                        return formatDuration(minutes > 0 ? minutes : 0);
-                      }
-                      return '0 menit';
-                    })()}
-                  </p>
+                  {selectedTask.completion_notes && (
+                    <div className="col-span-2">
+                      <p className="text-xs text-gray-500 mb-0.5">Catatan Penyelesaian</p>
+                      <p className="text-xs text-gray-300 whitespace-pre-wrap">{selectedTask.completion_notes}</p>
+                    </div>
+                  )}
                 </div>
-
-                {selectedTask.completion_notes && (
-                  <div>
-                    <p className="text-sm text-gray-600">Catatan Penyelesaian</p>
-                    <p className="text-sm text-gray-800 whitespace-pre-wrap">{selectedTask.completion_notes}</p>
-                  </div>
-                )}
 
                 {/* Time Logs */}
                 {selectedTask.time_logs && selectedTask.time_logs.length > 0 && (
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-2">Riwayat Aktivitas</p>
-                    <div className="space-y-2">
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold text-white mb-2">Riwayat Aktivitas</p>
+                    <div className="space-y-1.5">
                       {selectedTask.time_logs.map((log) => (
-                        <div key={log.id} className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg">
-                          <div className="text-2xl">
+                        <div key={log.id} className="flex items-start gap-2.5 bg-gray-800 border border-gray-700 p-2.5 rounded-lg">
+                          <div className="text-base">
                             {log.action === 'acknowledge' && '✅'}
                             {log.action === 'start' && '▶️'}
                             {log.action === 'pause' && '⏸️'}
@@ -666,9 +680,9 @@ const DaftarTugas = () => {
                             {log.action === 'complete' && '✔️'}
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-semibold text-gray-900">{getActionLabel(log.action)}</p>
-                            <p className="text-xs text-gray-600">{formatDate(log.timestamp)}</p>
-                            {log.notes && <p className="text-xs text-gray-700 mt-1">{log.notes}</p>}
+                            <p className="text-xs font-semibold text-white">{getActionLabel(log.action)}</p>
+                            <p className="text-xs text-gray-500">{formatDate(log.timestamp)}</p>
+                            {log.notes && <p className="text-xs text-gray-400 mt-0.5">{log.notes}</p>}
                           </div>
                         </div>
                       ))}
@@ -677,13 +691,11 @@ const DaftarTugas = () => {
                 )}
               </div>
 
-              <div className="flex justify-end pt-6">
+              {/* Fixed Footer */}
+              <div className="flex-shrink-0 p-3 border-t border-gray-800 flex justify-center items-center gap-2 bg-black">
                 <button
-                  onClick={() => {
-                    setShowDetailModal(false);
-                    setSelectedTask(null);
-                  }}
-                  className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+                  onClick={handleCloseDetail}
+                  className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition"
                 >
                   Tutup
                 </button>
@@ -694,215 +706,251 @@ const DaftarTugas = () => {
 
         {/* Complete Modal */}
         {showCompleteModal && selectedTask && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Selesaikan Tugas
-              </h2>
-              
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                <p className="text-sm font-semibold text-blue-900">{selectedTask.task_number}</p>
-                <p className="text-sm text-blue-800">{selectedTask.title}</p>
+          <div
+            className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 ${
+              isCompleteClosing ? 'modal-backdrop-exit' : 'modal-backdrop-enter'
+            }`}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) handleCloseComplete();
+            }}
+          >
+            <div
+              className={`bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full md:w-[420px] my-4 md:my-8 font-['Open_Sans'] flex flex-col overflow-hidden ${
+                isCompleteClosing ? 'modal-content-exit' : 'modal-content-enter'
+              }`}
+            >
+              {/* Fixed Header */}
+              <div className="flex-shrink-0 flex justify-between items-start px-4 py-3 bg-black border-b border-gray-800">
+                <div className="min-w-0">
+                  <span className="font-bold text-white text-sm">Selesaikan Tugas</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-white font-bold text-xs font-mono">{selectedTask.task_number}</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCloseComplete}
+                  className="flex-shrink-0 text-gray-400 hover:text-white transition text-lg font-bold leading-none ml-2"
+                  title="Tutup"
+                >
+                  ×
+                </button>
               </div>
 
-              <div className="space-y-4">
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto modern-scrollbar p-4 space-y-4">
+                <div className="bg-gray-950 border border-gray-800 rounded-lg p-3">
+                  <p className="text-xs text-gray-300">{selectedTask.title}</p>
+                </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-400 mb-1">
                     Catatan Penyelesaian (opsional)
                   </label>
                   <textarea
                     value={completionNotes}
                     onChange={(e) => setCompletionNotes(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
                     placeholder="Hasil pekerjaan, catatan tambahan..."
                     rows="4"
                   />
                 </div>
+              </div>
 
-                <div className="flex gap-3 justify-end pt-4">
-                  <button
-                    onClick={() => {
-                      setShowCompleteModal(false);
-                      setSelectedTask(null);
-                      setCompletionNotes('');
-                    }}
-                    className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    onClick={handleComplete}
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                  >
-                    ✔️ Selesai
-                  </button>
-                </div>
+              {/* Fixed Footer */}
+              <div className="flex-shrink-0 p-3 border-t border-gray-800 flex justify-center items-center gap-2 bg-black">
+                <button
+                  onClick={handleCloseComplete}
+                  className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleComplete}
+                  className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-500 text-white rounded-lg transition"
+                >
+                  ✔️ Selesai
+                </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Info Card */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start">
-            <div className="text-2xl mr-3">📝</div>
-            <div>
-              <h3 className="font-semibold text-blue-900 mb-1">
-                Manajemen Tugas IT Support
-              </h3>
-              <p className="text-sm text-blue-800">
-                Konfirmasi tugas baru, mulai mengerjakan, pause jika perlu, dan selesaikan. Durasi dikerjakan otomatis tercatat.
-              </p>
-            </div>
-          </div>
+        {/* Tabs */}
+        <div className="flex justify-center py-1">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="bg-transparent border border-zinc-800 rounded-sm h-auto p-0.5 gap-1">
+              <TabsTrigger
+                value="in_progress"
+                className="text-xs py-1.5 px-3 data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100 data-[state=active]:shadow-none text-zinc-500 rounded-sm"
+              >
+                In Progress
+                {tasks.filter(t => ['pending', 'acknowledged', 'in_progress', 'paused'].includes(t.user_status)).length > 0 && (
+                  <span className="ml-1.5 text-[10px] bg-zinc-700 text-zinc-300 px-1.5 py-0.5 rounded-full">
+                    {tasks.filter(t => ['pending', 'acknowledged', 'in_progress', 'paused'].includes(t.user_status)).length}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="riwayat"
+                className="text-xs py-1.5 px-3 data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100 data-[state=active]:shadow-none text-zinc-500 rounded-sm"
+              >
+                Riwayat
+                {tasks.filter(t => t.user_status === 'completed').length > 0 && (
+                  <span className="ml-1.5 text-[10px] bg-zinc-700 text-zinc-300 px-1.5 py-0.5 rounded-full">
+                    {tasks.filter(t => t.user_status === 'completed').length}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="scheduled"
+                className="text-xs py-1.5 px-3 data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100 data-[state=active]:shadow-none text-zinc-500 rounded-sm"
+              >
+                Scheduled
+                {tasks.filter(t => t.user_status === 'scheduled').length > 0 && (
+                  <span className="ml-1.5 text-[10px] bg-zinc-700 text-zinc-300 px-1.5 py-0.5 rounded-full">
+                    {tasks.filter(t => t.user_status === 'scheduled').length}
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
-        {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-gray-800 rounded-lg shadow p-4">
-            <p className="text-sm text-gray-400">Total Tugas</p>
-            <p className="text-2xl font-bold text-white">{tasks.length}</p>
-          </div>
-          <div className="bg-gray-800 rounded-lg shadow p-4">
-            <p className="text-sm text-gray-400">Tugas Baru</p>
-            <p className="text-2xl font-bold text-yellow-400">
-              {tasks.filter(t => t.user_status === 'pending').length}
-            </p>
-          </div>
-          <div className="bg-gray-800 rounded-lg shadow p-4">
-            <p className="text-sm text-gray-400">Sedang Dikerjakan</p>
-            <p className="text-2xl font-bold text-purple-400">
-              {tasks.filter(t => ['in_progress', 'paused'].includes(t.user_status)).length}
-            </p>
-          </div>
-          <div className="bg-gray-800 rounded-lg shadow p-4">
-            <p className="text-sm text-gray-400">Selesai</p>
-            <p className="text-2xl font-bold text-green-400">
-              {tasks.filter(t => t.user_status === 'completed').length}
-            </p>
-          </div>
-        </div>
-
-        {/* Tasks List */}
-        <div className="space-y-4">
-          {tasks.map((task) => (
-            <div key={task.id} className="bg-gray-800 rounded-xl shadow-md p-6 hover:bg-gray-700 transition">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-sm font-mono font-bold text-orange-400">
-                      {task.task_number}
-                    </span>
-                    {getPriorityBadge(task.priority)}
-                    {getStatusBadge(task.user_status)}
-                  </div>
-                  
-                  <h3 className="text-lg font-bold text-white mb-1">{task.title}</h3>
-                  
-                  <div className="flex flex-wrap gap-3 text-sm text-gray-300">
-                    <span>📋 {task.skp_category?.name}</span>
-                    {task.assigned_by_user && (
-                      <span>👤 Dari: {task.assigned_by_user?.full_name || task.assigned_by_user?.name}</span>
-                    )}
-                    <span>🕐 Dibuat: {formatDate(task.created_at)}</span>
-                    {task.completed_at && (
-                      <span>✅ Selesai: {formatDate(task.completed_at)}</span>
-                    )}
-                  </div>
-
-                  {(task.user_status === 'in_progress' || task.user_status === 'paused') && (
-                    <div className="mt-2">
-                      <span className="text-lg font-bold text-purple-400">
-                        ⏱️ {formatDuration(elapsedTime[task.id] || task.user_work_duration)}
+        {/* Task List */}
+        <div className="space-y-2">
+          {tasks
+            .filter((task) => {
+              if (activeTab === 'in_progress') return ['pending', 'acknowledged', 'in_progress', 'paused'].includes(task.user_status);
+              if (activeTab === 'riwayat') return task.user_status === 'completed';
+              if (activeTab === 'scheduled') return task.user_status === 'scheduled';
+              return false;
+            })
+            .map((task) => (
+              <div key={task.id} className="bg-gray-950 border border-gray-800 rounded-lg p-3 hover:border-gray-700 transition">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-mono font-bold text-white">
+                        {task.task_number}
                       </span>
+                      {getPriorityBadge(task.priority)}
+                      {getStatusBadge(task.user_status)}
                     </div>
-                  )}
-
-                  {task.user_status === 'completed' && (
-                    <div className="mt-2">
-                      <span className="text-lg font-bold text-green-400">
-                        ✅ Durasi: {(() => {
-                          // For completed tasks, use total_duration_minutes from task_assignments
-                          // Fallback to calculating from assigned_at to completed_at if not available
-                          if (task.total_duration_minutes && task.total_duration_minutes > 0) {
-                            return formatDuration(task.total_duration_minutes);
-                          } else if (task.assigned_at && task.completed_at) {
-                            const assignedTime = new Date(task.assigned_at);
-                            const completedTime = new Date(task.completed_at);
-                            const diffMs = completedTime.getTime() - assignedTime.getTime();
-                            const minutes = Math.floor(diffMs / 60000);
-                            return formatDuration(minutes > 0 ? minutes : 0);
-                          }
-                          // Last resort: use user_work_duration if total duration not available
-                          return formatDuration(task.user_work_duration || 0);
-                        })()}
-                      </span>
+                    
+                    <p className="text-xs font-bold text-white mb-1 truncate">{task.title}</p>
+                    
+                    <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                      <span>📋 {task.skp_category?.name}</span>
+                      {task.assigned_by_user && (
+                        <span>👤 {task.assigned_by_user?.full_name || task.assigned_by_user?.name}</span>
+                      )}
+                      <span>🕐 {formatDate(task.created_at)}</span>
+                      {task.completed_at && (
+                        <span>✅ {formatDate(task.completed_at)}</span>
+                      )}
+                      {task.scheduled_for && activeTab === 'scheduled' && (
+                        <span>⏰ {formatDate(task.scheduled_for)}</span>
+                      )}
                     </div>
-                  )}
-                </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => handleViewDetail(task)}
-                    className="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition text-sm"
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <MagnifyingGlassPlusIcon className="w-4 h-4" />
+                    {(task.user_status === 'in_progress' || task.user_status === 'paused') && (
+                      <div className="mt-1.5">
+                        <span className="text-xs font-bold text-purple-400">
+                          ⏱️ {formatDuration(elapsedTime[task.id] || task.user_work_duration)}
+                        </span>
+                      </div>
+                    )}
+
+                    {task.user_status === 'completed' && (
+                      <div className="mt-1.5">
+                        <span className="text-xs font-bold text-green-400">
+                          ✅ Durasi: {(() => {
+                            if (task.total_duration_minutes && task.total_duration_minutes > 0) {
+                              return formatDuration(task.total_duration_minutes);
+                            } else if (task.assigned_at && task.completed_at) {
+                              const assignedTime = new Date(task.assigned_at);
+                              const completedTime = new Date(task.completed_at);
+                              const diffMs = completedTime.getTime() - assignedTime.getTime();
+                              const minutes = Math.floor(diffMs / 60000);
+                              return formatDuration(minutes > 0 ? minutes : 0);
+                            }
+                            return formatDuration(task.user_work_duration || 0);
+                          })()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      onClick={() => handleViewDetail(task)}
+                      className="px-3 py-1.5 text-xs bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition flex items-center gap-1.5"
+                    >
+                      <MagnifyingGlassPlusIcon className="w-3.5 h-3.5" />
                       Detail
-                    </span>
-                  </button>
-
-                  {task.user_status === 'pending' && task.status !== 'scheduled' && (
-                    <button
-                      onClick={() => handleAcknowledge(task)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
-                    >
-                      ✅ Konfirmasi
                     </button>
-                  )}
 
-                  {(task.user_status === 'acknowledged' || task.user_status === 'paused') && task.status !== 'scheduled' && (
-                    <button
-                      onClick={() => handleStart(task)}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm"
-                    >
-                      ▶️ {task.user_status === 'paused' ? 'Lanjut' : 'Mulai'}
-                    </button>
-                  )}
-
-                  {task.user_status === 'in_progress' && task.status !== 'scheduled' && (
-                    <>
+                    {task.user_status === 'pending' && task.status !== 'scheduled' && (
                       <button
-                        onClick={() => handlePause(task)}
-                        className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition text-sm"
+                        onClick={() => handleAcknowledge(task)}
+                        className="px-3 py-1.5 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition"
                       >
-                        ⏸️ Pause
+                        ✅ Konfirmasi
                       </button>
+                    )}
+
+                    {(task.user_status === 'acknowledged' || task.user_status === 'paused') && task.status !== 'scheduled' && (
+                      <button
+                        onClick={() => handleStart(task)}
+                        className="px-3 py-1.5 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition"
+                      >
+                        ▶️ {task.user_status === 'paused' ? 'Lanjut' : 'Mulai'}
+                      </button>
+                    )}
+
+                    {task.user_status === 'in_progress' && task.status !== 'scheduled' && (
+                      <>
+                        <button
+                          onClick={() => handlePause(task)}
+                          className="px-3 py-1.5 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition"
+                        >
+                          ⏸️ Pause
+                        </button>
+                        <button
+                          onClick={() => handleCompleteClick(task)}
+                          className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-500 text-white rounded-lg transition"
+                        >
+                          ✔️ Selesai
+                        </button>
+                      </>
+                    )}
+
+                    {task.user_status === 'paused' && task.status !== 'scheduled' && (
                       <button
                         onClick={() => handleCompleteClick(task)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
+                        className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-500 text-white rounded-lg transition"
                       >
                         ✔️ Selesai
                       </button>
-                    </>
-                  )}
-
-                  {task.user_status === 'paused' && task.status !== 'scheduled' && (
-                    <button
-                      onClick={() => handleCompleteClick(task)}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
-                    >
-                      ✔️ Selesai
-                    </button>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
 
-          {tasks.length === 0 && (
-            <div className="bg-gray-800 rounded-xl shadow-md p-12 text-center text-gray-400">
-              <p className="text-lg">Belum ada tugas yang diberikan kepada Anda</p>
+          {tasks.filter((task) => {
+            if (activeTab === 'in_progress') return ['pending', 'acknowledged', 'in_progress', 'paused'].includes(task.user_status);
+            if (activeTab === 'riwayat') return task.user_status === 'completed';
+            if (activeTab === 'scheduled') return task.user_status === 'scheduled';
+            return false;
+          }).length === 0 && (
+            <div className="bg-gray-950 border border-gray-800 rounded-lg p-8 text-center">
+              <p className="text-xs text-gray-500">
+                {activeTab === 'in_progress' && 'Tidak ada tugas yang sedang dikerjakan'}
+                {activeTab === 'riwayat' && 'Belum ada riwayat tugas selesai'}
+                {activeTab === 'scheduled' && 'Tidak ada tugas terjadwal'}
+              </p>
             </div>
           )}
         </div>

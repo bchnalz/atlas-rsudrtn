@@ -12,11 +12,8 @@ const MasterJenisPerangkat = lazy(() => import('./pages/MasterJenisPerangkat'));
 const MasterJenisBarang = lazy(() => import('./pages/MasterJenisBarang'));
 const MasterLokasi = lazy(() => import('./pages/MasterLokasi'));
 const StokOpnam = lazy(() => import('./pages/StokOpnam'));
-const StokOpnameV2 = lazy(() => import('./pages/StokOpnameV2'));
-const CheckDataku = lazy(() => import('./pages/CheckDataku'));
 const LogPenugasan = lazy(() => import('./pages/LogPenugasan'));
 const ImportData = lazy(() => import('./pages/ImportData'));
-const UserManagement = lazy(() => import('./pages/UserManagement'));
 // Task Assignment System
 const MasterKategoriUser = lazy(() => import('./pages/MasterKategoriUser'));
 const MasterSKP = lazy(() => import('./pages/MasterSKP'));
@@ -25,16 +22,25 @@ const SKPCategoryAssignment = lazy(() => import('./pages/SKPCategoryAssignment')
 const PagePermissionAssignment = lazy(() => import('./pages/PagePermissionAssignment'));
 const Penugasan = lazy(() => import('./pages/Penugasan'));
 const DaftarTugas = lazy(() => import('./pages/DaftarTugas'));
-const ProgressSKP = lazy(() => import('./pages/ProgressSKP'));
 const DashboardExecutive = lazy(() => import('./pages/DashboardExecutive'));
 
 // Loading component
 const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50">
-    <div className="text-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-      <p className="mt-4 text-gray-600">Loading...</p>
-    </div>
+  <div className="min-h-screen flex items-center justify-center bg-black">
+    <svg 
+      className="h-6 w-6 animate-spin text-zinc-500" 
+      xmlns="http://www.w3.org/2000/svg" 
+      width="24" 
+      height="24" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+    </svg>
   </div>
 );
 
@@ -109,26 +115,6 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Protected Routes - Stok Opname V2 (IT Support and Administrator only) */}
-      <Route
-        path="/stok-opname-v2"
-        element={
-          <ProtectedRoute allowedRoles={['administrator', 'it_support']}>
-            <StokOpnameV2 />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Protected Routes - Check Dataku (All authenticated users - shows only their own data) */}
-      <Route
-        path="/check-dataku"
-        element={
-          <ProtectedRoute>
-            <CheckDataku />
-          </ProtectedRoute>
-        }
-      />
-
       {/* Protected Routes - Import Data (IT Support and Administrator only) */}
       <Route
         path="/import-data"
@@ -145,16 +131,6 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={['administrator', 'it_support', 'helpdesk', 'user']}>
             <LogPenugasan />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Protected Routes - User Management (Administrator only) */}
-      <Route
-        path="/user-management"
-        element={
-          <ProtectedRoute allowedRoles={['administrator']}>
-            <UserManagement />
           </ProtectedRoute>
         }
       />
@@ -225,16 +201,6 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <DaftarTugas />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Protected Routes - Progress SKP (All authenticated users) */}
-      <Route
-        path="/progress-skp"
-        element={
-          <ProtectedRoute>
-            <ProgressSKP />
           </ProtectedRoute>
         }
       />

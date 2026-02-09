@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import Layout from '../components/Layout';
@@ -6,7 +6,11 @@ import IPAddressInput from '../components/IPAddressInput';
 import MACAddressInput from '../components/MACAddressInput';
 import StorageInput from '../components/StorageInput';
 import { useToast } from '../contexts/ToastContext';
-import { MagnifyingGlassPlusIcon, PencilSquareIcon, ArrowsRightLeftIcon, TrashIcon, ClipboardDocumentIcon, FunnelIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassPlusIcon, MagnifyingGlassIcon, PencilSquareIcon, ArrowsRightLeftIcon, TrashIcon, ClipboardDocumentIcon, FunnelIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { Hammer } from '../components/animate-ui/icons/hammer';
+import { CheckBadgeIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 
 const StokOpnam = () => {
   const { profile } = useAuth();
@@ -31,6 +35,7 @@ const StokOpnam = () => {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isAddFormClosing, setIsAddFormClosing] = useState(false); // Animation state
   const [addStep, setAddStep] = useState(1); // Step 1 or 2
   const [newPerangkatId, setNewPerangkatId] = useState(null); // ID yang baru dibuat
   const [generatedIdPerangkat, setGeneratedIdPerangkat] = useState(''); // ID Perangkat string
@@ -47,6 +52,34 @@ const StokOpnam = () => {
   // Detail view state
   const [viewingDetail, setViewingDetail] = useState(null);
   const [detailTab, setDetailTab] = useState('detail'); // 'detail', 'history', or 'mutasi'
+  const [isDetailClosing, setIsDetailClosing] = useState(false); // Animation state
+
+  // Swipe support for detail tabs
+  const detailTabs = ['detail', 'history', 'mutasi'];
+  const touchStartRef = useRef({ x: 0, y: 0 });
+  const swipeContentRef = useRef(null);
+
+  const handleTabSwipe = useCallback((direction) => {
+    const currentIndex = detailTabs.indexOf(detailTab);
+    if (direction === 'left' && currentIndex < detailTabs.length - 1) {
+      setDetailTab(detailTabs[currentIndex + 1]);
+    } else if (direction === 'right' && currentIndex > 0) {
+      setDetailTab(detailTabs[currentIndex - 1]);
+    }
+  }, [detailTab]);
+
+  const handleTouchStart = useCallback((e) => {
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, []);
+
+  const handleTouchEnd = useCallback((e) => {
+    const deltaX = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const deltaY = e.changedTouches[0].clientY - touchStartRef.current.y;
+    // Only trigger swipe if horizontal movement is dominant and significant
+    if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+      handleTabSwipe(deltaX < 0 ? 'left' : 'right');
+    }
+  }, [handleTabSwipe]);
   
   // History state
   const [historyData, setHistoryData] = useState([]);
@@ -712,11 +745,8 @@ const StokOpnam = () => {
             });
             fetchPerangkat();
           }
-        } else if (viewingDetail) {
-          setViewingDetail(null);
-          setHistoryData([]);
-          setMutasiHistory([]);
-          setDetailTab('detail');
+        } else if (viewingDetail && !isDetailClosing) {
+          handleCloseDetail();
         } else if (showMutasiModal) {
           setShowMutasiModal(false);
           setMutasiPerangkat(null);
@@ -735,7 +765,7 @@ const StokOpnam = () => {
         document.removeEventListener('keydown', handleEscKey);
       };
     }
-  }, [showAddForm, viewingDetail, showMutasiModal, editingId, addStep]);
+  }, [showAddForm, viewingDetail, showMutasiModal, editingId, addStep, isDetailClosing]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -774,11 +804,11 @@ const StokOpnam = () => {
       );
     }
     return sortDirection === 'asc' ? (
-      <svg className="w-4 h-4 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
       </svg>
     ) : (
-      <svg className="w-4 h-4 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
       </svg>
     );
@@ -791,18 +821,18 @@ const StokOpnam = () => {
     const isSorted = sortColumn === column;
 
     return (
-      <th className="px-4 py-3 text-center text-xs font-medium text-white uppercase relative">
-        <div className="flex items-center justify-center gap-2">
-          <div className="flex items-center gap-1 px-2 py-1 rounded">
+      <th className="px-3 py-2 text-center text-xs font-medium text-white uppercase relative">
+        <div className="flex items-center justify-center gap-1">
+          <div className="flex items-center gap-1 px-1 py-0.5 rounded">
             <span>{label}</span>
             {/* Sort indicator only (not clickable) */}
             {isSorted ? (
               sortDirection === 'asc' ? (
-                <svg className="w-4 h-4 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                 </svg>
               ) : (
-                <svg className="w-4 h-4 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               )
@@ -816,12 +846,12 @@ const StokOpnam = () => {
                 e.stopPropagation();
                 setOpenHeaderMenu(isOpen ? null : column);
               }}
-              className={`p-1 rounded hover:bg-[#010e29] transition relative ${hasFilter ? 'text-cyan-400' : 'text-gray-400'}`}
+              className={`p-0.5 rounded hover:bg-gray-800 transition relative ${hasFilter ? 'text-white' : 'text-gray-400'}`}
               title={`Sort/Filter ${label}`}
             >
-              <FunnelIcon className="w-4 h-4" />
+              <FunnelIcon className="w-3 h-3" />
               {hasFilter && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-cyan-500 rounded-full"></span>
+                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-white rounded-full"></span>
               )}
             </button>
 
@@ -850,7 +880,7 @@ const StokOpnam = () => {
                     }}
                     className={`px-2 py-1.5 rounded-md text-xs border transition ${
                       sortColumn === column && sortDirection === 'asc'
-                        ? 'bg-cyan-600/20 border-cyan-500/50 text-cyan-200'
+                        ? 'bg-gray-600 border-gray-500 text-white'
                         : 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600'
                     }`}
                     title="Sort ASC"
@@ -865,7 +895,7 @@ const StokOpnam = () => {
                     }}
                     className={`px-2 py-1.5 rounded-md text-xs border transition ${
                       sortColumn === column && sortDirection === 'desc'
-                        ? 'bg-cyan-600/20 border-cyan-500/50 text-cyan-200'
+                        ? 'bg-gray-600 border-gray-500 text-white'
                         : 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600'
                     }`}
                     title="Sort DESC"
@@ -882,7 +912,7 @@ const StokOpnam = () => {
                     setColumnFilters((prev) => ({ ...prev, [column]: e.target.value }))
                   }
                   onClick={(e) => e.stopPropagation()}
-                  className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 text-gray-100 rounded focus:ring-2 focus:ring-cyan-500 focus:border-transparent placeholder-gray-500"
+                  className="w-full px-3 py-2 text-sm bg-gray-700 border border-gray-600 text-gray-100 rounded focus:ring-2 focus:ring-gray-500 focus:border-transparent placeholder-gray-500"
                   autoFocus
                 />
 
@@ -893,7 +923,7 @@ const StokOpnam = () => {
                       e.stopPropagation();
                       setColumnFilters((prev) => ({ ...prev, [column]: '' }));
                     }}
-                    className="mt-2 text-xs text-cyan-400 hover:text-cyan-300 transition"
+                    className="mt-2 text-xs text-gray-300 hover:text-white transition"
                   >
                     Clear filter
                   </button>
@@ -942,6 +972,7 @@ const StokOpnam = () => {
   };
 
   const handleViewDetail = async (item) => {
+    setIsDetailClosing(false); // Reset closing state
     setViewingDetail(item);
     setDetailTab('detail');
     setHistoryData([]);
@@ -949,6 +980,53 @@ const StokOpnam = () => {
     // Fetch history immediately
     await fetchRepairHistory(item.id);
     await fetchMutasiHistory(item.id);
+  };
+
+  const handleCloseDetail = () => {
+    setIsDetailClosing(true);
+    // Wait for animation to complete before hiding
+    setTimeout(() => {
+      setViewingDetail(null);
+      setHistoryData([]);
+      setMutasiHistory([]);
+      setDetailTab('detail');
+      setIsDetailClosing(false);
+    }, 150); // Match the exit animation duration
+  };
+
+  const handleCloseAddForm = (skipConfirm = false) => {
+    // If on step 2, ask for confirmation
+    if (addStep === 2 && !skipConfirm) {
+      if (!confirm('Data Step 1 sudah tersimpan. Yakin batal? Data minimal tetap tersimpan.')) {
+        return;
+      }
+    }
+    setIsAddFormClosing(true);
+    setTimeout(() => {
+      setShowAddForm(false);
+      setAddStep(1);
+      setNewPerangkatId(null);
+      setGeneratedIdPerangkat('');
+      setGeneratedNamaPerangkat('');
+      setIsSubmittingStep1(false);
+      setStep1Form({ jenis_perangkat_kode: '', serial_number: '', lokasi_kode: '' });
+      setStep2Form({
+        jenis_barang_id: '',
+        merk: '',
+        id_remoteaccess: '',
+        spesifikasi_processor: '',
+        kapasitas_ram: '',
+        storages: [],
+        mac_ethernet: '',
+        mac_wireless: '',
+        ip_ethernet: '',
+        ip_wireless: '',
+        serial_number_monitor: '',
+        status_perangkat: true,
+      });
+      setIsAddFormClosing(false);
+      fetchPerangkat();
+    }, 150);
   };
 
   // Handle Mutasi Perangkat
@@ -1107,86 +1185,121 @@ const StokOpnam = () => {
 
   return (
     <Layout>
-      <div className="space-y-3">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Stok Opnam</h1>
-            <p className="mt-0.5 text-sm text-white">
-              Kelola dan update data inventaris perangkat IT
-            </p>
+      <div className="space-y-3 text-[11px]">
+        {/* Search Bar and Add Button */}
+        <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center gap-1.5 border border-[#1a1a1a] rounded-md px-2 py-0.5">
+            <MagnifyingGlassIcon className="w-4 h-4 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search data perangkat"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-48 bg-transparent border-none text-white focus:outline-none placeholder-gray-500 origin-left"
+              style={{ fontFamily: "'Open Sans', sans-serif", fontSize: '12px', transform: 'scale(0.7)' }}
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="text-gray-500 hover:text-white transition"
+              >
+                <XMarkIcon className="w-3 h-3" />
+              </button>
+            )}
           </div>
+          {/* Desktop add button */}
           {canEdit && (
             <button
               onClick={() => {
                 setShowAddForm(true);
                 setAddStep(1);
               }}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition"
+              className="hidden lg:flex group items-center justify-center h-5 px-2 hover:px-3 bg-white hover:bg-gray-200 text-black rounded-md transition-all duration-300 ease-out overflow-hidden"
+              style={{ fontFamily: "'Open Sans', sans-serif" }}
             >
-              + Tambah Perangkat
+              <Hammer size={12} animateOnHover className="transition-all duration-300 group-hover:mr-1" />
+              <span className="max-w-0 opacity-0 group-hover:max-w-[120px] group-hover:opacity-100 text-[10px] whitespace-nowrap transition-all duration-300 ease-out">
+                Tambah Perangkat
+              </span>
             </button>
           )}
         </div>
 
+
         {/* 2-STEP ADD FORM MODAL */}
         {showAddForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 my-8">
-              
-              {/* STEP 1: Generate ID */}
-              {addStep === 1 && (
-                <>
-                  <div className="flex justify-between items-start mb-4">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      Step 1: Data Minimal Perangkat
-                    </h2>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowAddForm(false);
-                        setIsSubmittingStep1(false);
-                        setStep1Form({ jenis_perangkat_kode: '', serial_number: '', lokasi_kode: '' });
-                      }}
-                      className="text-gray-400 hover:text-gray-600 transition text-2xl font-bold leading-none"
-                      title="Tutup"
-                    >
-                      ×
-                    </button>
+          <div 
+            className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto ${
+              isAddFormClosing ? 'modal-backdrop-exit' : 'modal-backdrop-enter'
+            }`}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) handleCloseAddForm();
+            }}
+          >
+            <div 
+              className={`bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full max-h-[90vh] md:w-[480px] md:max-h-[90vh] my-4 md:my-8 font-['Open_Sans'] flex flex-col overflow-hidden ${
+                isAddFormClosing ? 'modal-content-exit' : 'modal-content-enter'
+              }`}
+            >
+              {/* Fixed Header */}
+              <div className="flex-shrink-0 flex justify-between items-start px-4 py-3 bg-black border-b border-gray-800">
+                <div className="min-w-0">
+                  <span className="font-bold text-white text-sm">Tambah Perangkat</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-yellow-300 text-xs">Step {addStep} of 2</span>
+                    <span className="text-gray-600">•</span>
+                    <span className="text-xs text-gray-400">
+                      {addStep === 1 ? 'Data Minimal' : 'Detail Perangkat'}
+                    </span>
                   </div>
-                  <form onSubmit={handleGenerateAndSave} className="space-y-4">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                      <p className="text-sm text-blue-800">
-                        <strong>Isi 3 data berikut</strong> untuk generate ID Perangkat
-                      </p>
-                    </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleCloseAddForm()}
+                  className="flex-shrink-0 text-gray-400 hover:text-white transition text-lg font-bold leading-none ml-2"
+                  title="Tutup"
+                >
+                  ×
+                </button>
+              </div>
 
+              {/* Scrollable Content Area */}
+              <div className="flex-1 overflow-y-auto modern-scrollbar p-4">
+                {/* STEP 1: Generate ID */}
+                {addStep === 1 && (
+                  <form id="step1Form" onSubmit={handleGenerateAndSave} className="space-y-4">
                     {/* 1. Jenis Perangkat */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        1. Jenis Perangkat *
+                      <label className="block text-xs font-medium text-gray-400 mb-1">
+                        Jenis Perangkat <span className="text-yellow-300">*</span>
                       </label>
-                      <select
-                        required
+                      <Select
                         value={step1Form.jenis_perangkat_kode}
-                        onChange={(e) =>
-                          setStep1Form({ ...step1Form, jenis_perangkat_kode: e.target.value })
+                        onValueChange={(value) =>
+                          setStep1Form({ ...step1Form, jenis_perangkat_kode: value })
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
-                        <option value="">-- Pilih Jenis Perangkat --</option>
-                        {jenisPerangkatList.map((jenis) => (
-                          <option key={jenis.id} value={jenis.kode}>
-                            {jenis.kode} - {jenis.nama}
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="w-full h-9 px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600">
+                          <SelectValue placeholder="-- Pilih Jenis Perangkat --" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-950 border border-gray-800 text-white">
+                          {jenisPerangkatList.map((jenis) => (
+                            <SelectItem 
+                              key={jenis.id} 
+                              value={jenis.kode}
+                              className="text-xs text-white focus:bg-gray-800 focus:text-white"
+                            >
+                              {jenis.kode} - {jenis.nama}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     {/* 2. Serial Number */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        2. Serial Number *
+                      <label className="block text-xs font-medium text-gray-400 mb-1">
+                        Serial Number <span className="text-yellow-300">*</span>
                       </label>
                       <input
                         type="text"
@@ -1195,642 +1308,558 @@ const StokOpnam = () => {
                         onChange={(e) =>
                           setStep1Form({ ...step1Form, serial_number: e.target.value })
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
                         placeholder="Masukkan Serial Number"
                       />
                     </div>
 
                     {/* 3. Lokasi */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        3. Lokasi *
+                      <label className="block text-xs font-medium text-gray-400 mb-1">
+                        Lokasi <span className="text-yellow-300">*</span>
                       </label>
-                      <select
-                        required
+                      <Select
                         value={step1Form.lokasi_kode}
-                        onChange={(e) =>
-                          setStep1Form({ ...step1Form, lokasi_kode: e.target.value })
+                        onValueChange={(value) =>
+                          setStep1Form({ ...step1Form, lokasi_kode: value })
                         }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
-                        <option value="">-- Pilih Lokasi --</option>
-                        {lokasiList.map((lok) => (
-                          <option key={lok.id} value={lok.kode}>
-                            {lok.kode} - {lok.nama}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="flex gap-3 justify-end pt-4 border-t">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowAddForm(false);
-                          setStep1Form({ jenis_perangkat_kode: '', serial_number: '', lokasi_kode: '' });
-                        }}
-                        className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
-                      >
-                        Batal
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={isSubmittingStep1}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                      >
-                        {isSubmittingStep1 ? (
-                          <>
-                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span>Memproses...</span>
-                          </>
-                        ) : (
-                          '🔑 Generate ID Perangkat'
-                        )}
-                      </button>
+                        <SelectTrigger className="w-full h-9 px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600">
+                          <SelectValue placeholder="-- Pilih Lokasi --" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-950 border border-gray-800 text-white">
+                          {lokasiList.map((lok) => (
+                            <SelectItem 
+                              key={lok.id} 
+                              value={lok.kode}
+                              className="text-xs text-white focus:bg-gray-800 focus:text-white"
+                            >
+                              {lok.kode} - {lok.nama}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </form>
-                </>
-              )}
+                )}
 
-              {/* STEP 2: Detail Form */}
-              {addStep === 2 && (
-                <>
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 space-y-3">
-                    <div>
-                      <p className="text-sm text-green-800 font-medium mb-1">
-                        ✅ ID Perangkat Berhasil Dibuat!
-                      </p>
-                      <p className="text-2xl font-mono font-bold text-green-700">
-                        {generatedIdPerangkat}
-                      </p>
+                {/* STEP 2: Detail Form */}
+                {addStep === 2 && (
+                  <>
+                    <div className="bg-gray-950 border border-gray-800 rounded-lg p-3 mb-4 space-y-2">
+                      <div>
+                        <p className="text-xs text-gray-400 font-medium">ID Perangkat</p>
+                        <p className="text-sm font-bold text-white">{generatedIdPerangkat}</p>
+                      </div>
+                      <div className="border-t border-gray-800 pt-2">
+                        <p className="text-xs text-gray-400 font-medium">Nama Perangkat</p>
+                        <p className="text-xs text-gray-300">{generatedNamaPerangkat}</p>
+                      </div>
                     </div>
-                    <div className="border-t border-green-200 pt-3">
-                      <p className="text-sm text-green-800 font-medium mb-1">
-                        🏷️ Nama Perangkat (Auto-Generated)
-                      </p>
-                      <p className="text-xl font-semibold text-green-700">
-                        {generatedNamaPerangkat}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-start mb-4">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      Step 2: Lengkapi Detail Perangkat
-                    </h2>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (confirm('Data Step 1 sudah tersimpan. Yakin batal? Data minimal tetap tersimpan.')) {
-                          setShowAddForm(false);
-                          setAddStep(1);
-                          setNewPerangkatId(null);
-                          setGeneratedIdPerangkat('');
-                          setGeneratedNamaPerangkat('');
-                          setStep1Form({ jenis_perangkat_kode: '', serial_number: '', lokasi_kode: '' });
-                          setStep2Form({
-                            jenis_barang_id: '',
-                            merk: '',
-                            id_remoteaccess: '',
-                            spesifikasi_processor: '',
-                            kapasitas_ram: '',
-                            jenis_storage: '',
-                            kapasitas_storage: '',
-                            mac_ethernet: '',
-                            mac_wireless: '',
-                            ip_ethernet: '',
-                            ip_wireless: '',
-                            serial_number_monitor: '',
-                            status_perangkat: true,
-                          });
-                        }
-                      }}
-                      className="text-gray-400 hover:text-gray-600 transition text-2xl font-bold leading-none"
-                      title="Tutup"
-                    >
-                      ×
-                    </button>
-                  </div>
-                  
-                  <form onSubmit={handleSaveDetail} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* 1. Jenis Barang */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          1. Jenis Barang
-                        </label>
-                        <select
-                          value={step2Form.jenis_barang_id}
-                          onChange={(e) =>
-                            setStep2Form({ ...step2Form, jenis_barang_id: e.target.value })
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="">-- Pilih Jenis Barang --</option>
-                          {getFilteredJenisBarang(step1Form.jenis_perangkat_kode).map((jenis) => (
-                            <option key={jenis.id} value={jenis.id}>
-                              {jenis.nama}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* 2. Merk */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          2. Merk
-                        </label>
-                        <input
-                          type="text"
-                          value={step2Form.merk}
-                          onChange={(e) => setStep2Form({ ...step2Form, merk: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Dell, HP, Lenovo, ..."
-                        />
-                      </div>
-
-                      {/* 3. ID Remote Access */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          3. ID Remote Access
-                        </label>
-                        <input
-                          type="text"
-                          value={step2Form.id_remoteaccess}
-                          onChange={(e) =>
-                            setStep2Form({ ...step2Form, id_remoteaccess: e.target.value })
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="AnyDesk / TeamViewer ID"
-                        />
-                      </div>
-
-                      {/* 4. Spesifikasi Processor */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          4. Spesifikasi Processor
-                        </label>
-                        <input
-                          type="text"
-                          value={step2Form.spesifikasi_processor}
-                          onChange={(e) =>
-                            setStep2Form({ ...step2Form, spesifikasi_processor: e.target.value })
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Intel Core i5 Gen 10, ..."
-                        />
-                      </div>
-
-                      {/* 5. Kapasitas RAM */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          5. Kapasitas RAM
-                        </label>
-                        <input
-                          type="text"
-                          value={step2Form.kapasitas_ram}
-                          onChange={(e) =>
-                            setStep2Form({ ...step2Form, kapasitas_ram: e.target.value })
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="8GB, 16GB, ..."
-                        />
-                      </div>
-
-                    </div>
-
-                    {/* 6. Storage (Full Width) */}
-                    <div className="col-span-full">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        6. Storage (Opsional)
-                      </label>
-                      <StorageInput
-                        value={step2Form.storages}
-                        onChange={(storages) =>
-                          setStep2Form({ ...step2Form, storages })
-                        }
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                      {/* 8. MAC Ethernet */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          8. MAC Ethernet
-                        </label>
-                        <MACAddressInput
-                          value={step2Form.mac_ethernet}
-                          onChange={(value) =>
-                            setStep2Form({ ...step2Form, mac_ethernet: value })
-                          }
-                          placeholder="00:00:00:00:00:00"
-                        />
-                      </div>
-
-                      {/* 9. MAC Wireless */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          9. MAC Wireless
-                        </label>
-                        <MACAddressInput
-                          value={step2Form.mac_wireless}
-                          onChange={(value) =>
-                            setStep2Form({ ...step2Form, mac_wireless: value })
-                          }
-                          placeholder="00:00:00:00:00:00"
-                        />
-                      </div>
-
-                      {/* 10. IP Ethernet */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          10. IP Ethernet
-                        </label>
-                        <IPAddressInput
-                          value={step2Form.ip_ethernet}
-                          onChange={(value) =>
-                            setStep2Form({ ...step2Form, ip_ethernet: value })
-                          }
-                          placeholder="192.168.1.100"
-                        />
-                      </div>
-
-                      {/* 11. IP Wireless */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          11. IP Wireless
-                        </label>
-                        <IPAddressInput
-                          value={step2Form.ip_wireless}
-                          onChange={(value) =>
-                            setStep2Form({ ...step2Form, ip_wireless: value })
-                          }
-                          placeholder="192.168.1.101"
-                        />
-                      </div>
-
-                      {/* 12. SN Monitor */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          12. SN Monitor
-                        </label>
-                        <input
-                          type="text"
-                          value={step2Form.serial_number_monitor}
-                          onChange={(e) =>
-                            setStep2Form({ ...step2Form, serial_number_monitor: e.target.value })
-                          }
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="Serial Number Monitor"
-                        />
-                      </div>
-
-                      {/* 13. Status Perangkat (Toggle) */}
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          13. Status Perangkat
-                        </label>
-                        <div className="flex items-center space-x-4">
-                          <button
-                            type="button"
-                            onClick={() => setStep2Form({ ...step2Form, status_perangkat: true })}
-                            className={`px-6 py-3 rounded-lg font-semibold transition ${
-                              step2Form.status_perangkat
-                                ? 'bg-green-500 text-white shadow-lg'
-                                : 'bg-gray-200 text-gray-600'
-                            }`}
+                    
+                    <form id="step2Form" onSubmit={handleSaveDetail} className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* 1. Jenis Barang */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1">
+                            Jenis Barang
+                          </label>
+                          <Select
+                            value={step2Form.jenis_barang_id}
+                            onValueChange={(value) =>
+                              setStep2Form({ ...step2Form, jenis_barang_id: value })
+                            }
                           >
-                            ✅ Layak
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setStep2Form({ ...step2Form, status_perangkat: false })}
-                            className={`px-6 py-3 rounded-lg font-semibold transition ${
-                              !step2Form.status_perangkat
-                                ? 'bg-red-500 text-white shadow-lg'
-                                : 'bg-gray-200 text-gray-600'
-                            }`}
-                          >
-                            ❌ Tidak Layak
-                          </button>
+                            <SelectTrigger className="w-full h-9 px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600">
+                              <SelectValue placeholder="-- Pilih --" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-gray-950 border border-gray-800 text-white">
+                              {getFilteredJenisBarang(step1Form.jenis_perangkat_kode).map((jenis) => (
+                                <SelectItem 
+                                  key={jenis.id} 
+                                  value={String(jenis.id)}
+                                  className="text-xs text-white focus:bg-gray-800 focus:text-white"
+                                >
+                                  {jenis.nama}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* 2. Merk */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1">
+                            Merk
+                          </label>
+                          <input
+                            type="text"
+                            value={step2Form.merk}
+                            onChange={(e) => setStep2Form({ ...step2Form, merk: e.target.value })}
+                            className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
+                            placeholder="Dell, HP, Lenovo, ..."
+                          />
+                        </div>
+
+                        {/* 3. ID Remote Access */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1">
+                            ID Remote Access
+                          </label>
+                          <input
+                            type="text"
+                            value={step2Form.id_remoteaccess}
+                            onChange={(e) =>
+                              setStep2Form({ ...step2Form, id_remoteaccess: e.target.value })
+                            }
+                            className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
+                            placeholder="AnyDesk / TeamViewer ID"
+                          />
+                        </div>
+
+                        {/* 4. Spesifikasi Processor */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1">
+                            Processor
+                          </label>
+                          <input
+                            type="text"
+                            value={step2Form.spesifikasi_processor}
+                            onChange={(e) =>
+                              setStep2Form({ ...step2Form, spesifikasi_processor: e.target.value })
+                            }
+                            className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
+                            placeholder="Intel Core i5 Gen 10, ..."
+                          />
+                        </div>
+
+                        {/* 5. Kapasitas RAM */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1">
+                            RAM
+                          </label>
+                          <input
+                            type="text"
+                            value={step2Form.kapasitas_ram}
+                            onChange={(e) =>
+                              setStep2Form({ ...step2Form, kapasitas_ram: e.target.value })
+                            }
+                            className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
+                            placeholder="8GB, 16GB, ..."
+                          />
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex gap-3 justify-end pt-4 border-t">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (confirm('Data Step 1 sudah tersimpan. Yakin batal? Data minimal tetap tersimpan.')) {
-                            setShowAddForm(false);
-                            setAddStep(1);
-                            setNewPerangkatId(null);
-                            setGeneratedIdPerangkat('');
-                            setStep1Form({ jenis_perangkat_kode: '', serial_number: '', lokasi_kode: '' });
-                            setStep2Form({
-                              jenis_barang_id: '',
-                              merk: '',
-                              id_remoteaccess: '',
-                              spesifikasi_processor: '',
-                              kapasitas_ram: '',
-                              jenis_storage: '',
-                              kapasitas_storage: '',
-                              mac_ethernet: '',
-                              mac_wireless: '',
-                              ip_ethernet: '',
-                              ip_wireless: '',
-                              serial_number_monitor: '',
-                              status_perangkat: true,
-                            });
-                            fetchPerangkat();
+                      {/* 6. Storage (Full Width) */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-400 mb-2">
+                          Storage
+                        </label>
+                        <StorageInput
+                          value={step2Form.storages}
+                          onChange={(storages) =>
+                            setStep2Form({ ...step2Form, storages })
                           }
-                        }}
-                        className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
-                      >
-                        Batal
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                      >
-                        💾 Simpan Detail
-                      </button>
-                    </div>
-                  </form>
-                </>
-              )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* 8. MAC Ethernet */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1">
+                            MAC Ethernet
+                          </label>
+                          <MACAddressInput
+                            value={step2Form.mac_ethernet}
+                            onChange={(value) =>
+                              setStep2Form({ ...step2Form, mac_ethernet: value })
+                            }
+                            placeholder="00:00:00:00:00:00"
+                          />
+                        </div>
+
+                        {/* 9. MAC Wireless */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1">
+                            MAC Wireless
+                          </label>
+                          <MACAddressInput
+                            value={step2Form.mac_wireless}
+                            onChange={(value) =>
+                              setStep2Form({ ...step2Form, mac_wireless: value })
+                            }
+                            placeholder="00:00:00:00:00:00"
+                          />
+                        </div>
+
+                        {/* 10. IP Ethernet */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1">
+                            IP Ethernet
+                          </label>
+                          <IPAddressInput
+                            value={step2Form.ip_ethernet}
+                            onChange={(value) =>
+                              setStep2Form({ ...step2Form, ip_ethernet: value })
+                            }
+                            placeholder="192.168.1.100"
+                          />
+                        </div>
+
+                        {/* 11. IP Wireless */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1">
+                            IP Wireless
+                          </label>
+                          <IPAddressInput
+                            value={step2Form.ip_wireless}
+                            onChange={(value) =>
+                              setStep2Form({ ...step2Form, ip_wireless: value })
+                            }
+                            placeholder="192.168.1.101"
+                          />
+                        </div>
+
+                        {/* 12. SN Monitor */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1">
+                            SN Monitor
+                          </label>
+                          <input
+                            type="text"
+                            value={step2Form.serial_number_monitor}
+                            onChange={(e) =>
+                              setStep2Form({ ...step2Form, serial_number_monitor: e.target.value })
+                            }
+                            className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
+                            placeholder="Serial Number Monitor"
+                          />
+                        </div>
+
+                        {/* 13. Status Perangkat (Toggle) */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-400 mb-1">
+                            Status Perangkat
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setStep2Form({ ...step2Form, status_perangkat: true })}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                                step2Form.status_perangkat
+                                  ? 'bg-green-600 text-white'
+                                  : 'bg-gray-800 text-gray-400'
+                              }`}
+                            >
+                              Layak
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setStep2Form({ ...step2Form, status_perangkat: false })}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                                !step2Form.status_perangkat
+                                  ? 'bg-red-600 text-white'
+                                  : 'bg-gray-800 text-gray-400'
+                              }`}
+                            >
+                              Rusak
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  </>
+                )}
+              </div>
+
+              {/* Fixed Footer - Action Buttons */}
+              <div className="flex-shrink-0 p-3 border-t border-gray-800 flex justify-center items-center gap-2 bg-black">
+                <button
+                  type="button"
+                  onClick={() => handleCloseAddForm()}
+                  className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition"
+                >
+                  Batal
+                </button>
+                {addStep === 1 ? (
+                  <button
+                    type="submit"
+                    form="step1Form"
+                    disabled={isSubmittingStep1}
+                    className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-500 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  >
+                    {isSubmittingStep1 ? (
+                      <>
+                        <svg className="animate-spin h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Memproses...</span>
+                      </>
+                    ) : (
+                      'Generate ID'
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    form="step2Form"
+                    className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-500 text-white rounded-lg transition"
+                  >
+                    Simpan
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
 
         {/* DETAIL VIEW MODAL WITH TABS */}
         {viewingDetail && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-gray-900 rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto my-8">
-              {/* Header */}
-              <div className="flex justify-between items-start p-4 border-b border-gray-700">
-                <div>
-                  <h2 className="text-xl font-bold text-white">Detail Perangkat</h2>
-                  <p className="text-xs text-gray-400 mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className="inline-flex items-center gap-1">
-                      <span className="font-mono font-bold text-yellow-300">{viewingDetail.id_perangkat}</span>
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(viewingDetail.id_perangkat, 'Perangkat ID')}
-                        className="text-gray-400 hover:text-white transition"
-                        title="Copy Perangkat ID"
-                        aria-label="Copy Perangkat ID"
-                      >
-                        <ClipboardDocumentIcon className="w-4 h-4" />
-                      </button>
-                    </span>
-                    <span className="text-gray-500">-</span>
-                    <span className="inline-flex items-center gap-1">
-                      <span className="font-semibold text-gray-200">{viewingDetail.nama_perangkat}</span>
-                      <button
-                        type="button"
-                        onClick={() => copyToClipboard(viewingDetail.nama_perangkat, 'Perangkat Name')}
-                        className="text-gray-400 hover:text-white transition"
-                        title="Copy Perangkat Name"
-                        aria-label="Copy Perangkat Name"
-                      >
-                        <ClipboardDocumentIcon className="w-4 h-4" />
-                      </button>
-                    </span>
-                  </p>
+          <div 
+            className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto ${
+              isDetailClosing ? 'modal-backdrop-exit' : 'modal-backdrop-enter'
+            }`}
+            onClick={(e) => {
+              // Close when clicking backdrop
+              if (e.target === e.currentTarget) handleCloseDetail();
+            }}
+          >
+            <div 
+              className={`bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full h-[60vh] md:w-[504px] md:h-[350px] my-4 md:my-8 font-['Open_Sans'] flex flex-col overflow-hidden ${
+                isDetailClosing ? 'modal-content-exit' : 'modal-content-enter'
+              }`}
+            >
+              {/* Fixed Header */}
+              <div className="flex-shrink-0 flex justify-between items-start px-4 pt-3 pb-1 bg-black">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white text-sm truncate">{viewingDetail.nama_perangkat}</span>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(viewingDetail.nama_perangkat, 'Nama Perangkat')}
+                      className="text-gray-400 hover:text-white transition flex-shrink-0"
+                      title="Copy Nama Perangkat"
+                      aria-label="Copy Nama Perangkat"
+                    >
+                      <ClipboardDocumentIcon className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-white font-bold text-xs">{viewingDetail.id_perangkat}</span>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(viewingDetail.id_perangkat, 'ID Perangkat')}
+                      className="text-gray-400 hover:text-white transition flex-shrink-0"
+                      title="Copy ID Perangkat"
+                      aria-label="Copy ID Perangkat"
+                    >
+                      <ClipboardDocumentIcon className="w-3 h-3" />
+                    </button>
+                    <span className="text-gray-600">•</span>
+                    {viewingDetail.status_perangkat === 'layak' ? (
+                      <CheckBadgeIcon className="w-4 h-4 text-white" />
+                    ) : (
+                      <ExclamationTriangleIcon className="w-4 h-4 text-red-500" />
+                    )}
+                  </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    setViewingDetail(null);
-                    setHistoryData([]);
-                    setMutasiHistory([]);
-                    setDetailTab('detail');
-                  }}
-                  className="text-gray-400 hover:text-white transition text-2xl font-bold leading-none"
+                  onClick={handleCloseDetail}
+                  className="flex-shrink-0 text-gray-400 hover:text-white transition text-2xl font-bold leading-none ml-2"
                   title="Tutup"
                 >
                   ×
                 </button>
               </div>
 
-              {/* Tabs */}
-              <div className="flex border-b border-gray-700 bg-gray-800">
-                <button
-                  onClick={() => setDetailTab('detail')}
-                  className={`flex-1 px-4 py-2.5 text-sm font-medium transition ${
-                    detailTab === 'detail'
-                      ? 'text-cyan-400 border-b-2 border-cyan-400 bg-gray-900'
-                      : 'text-gray-400 hover:text-gray-200'
-                  }`}
-                >
-                  📋 Detail
-                </button>
-                <button
-                  onClick={() => setDetailTab('history')}
-                  className={`flex-1 px-4 py-2.5 text-sm font-medium transition ${
-                    detailTab === 'history'
-                      ? 'text-cyan-400 border-b-2 border-cyan-400 bg-gray-900'
-                      : 'text-gray-400 hover:text-gray-200'
-                  }`}
-                >
-                  🔧 History Perbaikan
-                  {historyData.length > 0 && (
-                    <span className="ml-1.5 bg-cyan-600 text-white text-xs px-1.5 py-0.5 rounded-full">
-                      {historyData.length}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => setDetailTab('mutasi')}
-                  className={`flex-1 px-4 py-2.5 text-sm font-medium transition ${
-                    detailTab === 'mutasi'
-                      ? 'text-cyan-400 border-b-2 border-cyan-400 bg-gray-900'
-                      : 'text-gray-400 hover:text-gray-200'
-                  }`}
-                >
-                  🔄 History Mutasi
-                  {mutasiHistory.length > 0 && (
-                    <span className="ml-1.5 bg-green-600 text-white text-xs px-1.5 py-0.5 rounded-full">
-                      {mutasiHistory.length}
-                    </span>
-                  )}
-                </button>
+              {/* Fixed Tabs - dashboard style */}
+              <div className="flex-shrink-0 flex justify-center py-1">
+                <Tabs value={detailTab} onValueChange={setDetailTab}>
+                  <TabsList className="bg-transparent border border-zinc-800 rounded-sm h-auto p-0.5 gap-1">
+                    <TabsTrigger
+                      value="detail"
+                      className="text-xs py-1.5 px-3 data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100 data-[state=active]:shadow-none text-zinc-500 rounded-sm"
+                    >
+                      Detail
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="history"
+                      className="text-xs py-1.5 px-3 data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100 data-[state=active]:shadow-none text-zinc-500 rounded-sm"
+                    >
+                      History Perbaikan
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="mutasi"
+                      className="text-xs py-1.5 px-3 data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100 data-[state=active]:shadow-none text-zinc-500 rounded-sm"
+                    >
+                      History Mutasi
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
 
-              {/* Tab Content */}
-              <div className="p-4">
+              {/* Scrollable Content Area - swipeable */}
+              <div
+                ref={swipeContentRef}
+                className="flex-1 overflow-y-auto modern-scrollbar p-4"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+              >
                 {/* DETAIL TAB */}
                 {detailTab === 'detail' && (
-                  <div className="space-y-2.5 text-gray-100 text-sm">
-                {/* Status */}
-                <div>
-                  <p className="text-xs text-gray-500 mb-0.5">Status</p>
-                  <p className={`text-sm font-semibold ${
-                    viewingDetail.status_perangkat === 'layak' ? 'text-green-400' : 'text-red-400'
-                  }`}>
-                    {viewingDetail.status_perangkat === 'layak' ? '✅ Layak' : '❌ Rusak'}
-                  </p>
-                </div>
+                  <div key="tab-detail" className="animate-tab-slide grid grid-cols-2 gap-x-6 gap-y-2.5 text-gray-100 text-xs">
+                    {viewingDetail.serial_number && viewingDetail.serial_number !== '-' && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">Serial Number</p>
+                        <p className="text-xs">{viewingDetail.serial_number}</p>
+                      </div>
+                    )}
 
-                {/* ID Remote Access */}
-                {viewingDetail.id_remoteaccess && viewingDetail.id_remoteaccess !== '-' && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">ID Remote Access</p>
-                    <p className="text-sm font-mono">{viewingDetail.id_remoteaccess}</p>
-                  </div>
-                )}
+                    {viewingDetail.lokasi && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">Lokasi</p>
+                        <p className="text-xs">{viewingDetail.lokasi.kode} - {viewingDetail.lokasi.nama}</p>
+                      </div>
+                    )}
 
-                {/* Serial Number */}
-                {viewingDetail.serial_number && viewingDetail.serial_number !== '-' && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">Serial Number</p>
-                    <p className="text-sm">{viewingDetail.serial_number}</p>
-                  </div>
-                )}
-
-                {/* Lokasi */}
-                {viewingDetail.lokasi && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">Lokasi</p>
-                    <p className="text-sm">{viewingDetail.lokasi.kode} - {viewingDetail.lokasi.nama}</p>
-                  </div>
-                )}
-
-                {/* Jenis Perangkat */}
-                {viewingDetail.jenis_perangkat && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">Jenis Perangkat</p>
-                    <p className="text-sm">{viewingDetail.jenis_perangkat.kode} - {viewingDetail.jenis_perangkat.nama}</p>
-                  </div>
-                )}
-
-                {/* Jenis Barang */}
-                {viewingDetail.jenis_barang && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">Jenis Barang</p>
-                    <p className="text-sm">{viewingDetail.jenis_barang.nama}</p>
-                  </div>
-                )}
-
-                {/* Merk */}
-                {viewingDetail.merk && viewingDetail.merk !== '-' && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">Merk</p>
-                    <p className="text-sm">{viewingDetail.merk}</p>
-                  </div>
-                )}
-
-                {/* Processor */}
-                {viewingDetail.spesifikasi_processor && viewingDetail.spesifikasi_processor !== '-' && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">Processor</p>
-                    <p className="text-sm">{viewingDetail.spesifikasi_processor}</p>
-                  </div>
-                )}
-
-                {/* RAM */}
-                {viewingDetail.kapasitas_ram && viewingDetail.kapasitas_ram !== '-' && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">RAM</p>
-                    <p className="text-sm">{viewingDetail.kapasitas_ram}</p>
-                  </div>
-                )}
-
-                {/* Storage */}
-                {viewingDetail.perangkat_storage && viewingDetail.perangkat_storage.length > 0 && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Storage</p>
-                    <div className="space-y-0.5">
-                      {viewingDetail.perangkat_storage.map((storage, index) => (
-                        <div key={storage.id || index} className="flex items-center gap-2 text-sm">
-                          <span className="bg-blue-900 text-blue-200 px-1.5 py-0.5 rounded text-xs font-medium">
-                            {storage.jenis_storage}
-                          </span>
-                          <span>{storage.kapasitas} GB</span>
+                    {viewingDetail.id_remoteaccess && viewingDetail.id_remoteaccess !== '-' && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">ID Remote Access</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs">{viewingDetail.id_remoteaccess}</p>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(viewingDetail.id_remoteaccess, 'ID Remote Access')}
+                            className="text-gray-500 hover:text-white transition flex-shrink-0"
+                            title="Copy ID Remote Access"
+                            aria-label="Copy ID Remote Access"
+                          >
+                            <ClipboardDocumentIcon className="w-3 h-3" />
+                          </button>
                         </div>
-                      ))}
+                      </div>
+                    )}
+
+                    {viewingDetail.jenis_perangkat && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">Jenis Perangkat</p>
+                        <p className="text-xs">{viewingDetail.jenis_perangkat.kode} - {viewingDetail.jenis_perangkat.nama}</p>
+                      </div>
+                    )}
+
+                    {viewingDetail.spesifikasi_processor && viewingDetail.spesifikasi_processor !== '-' && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">Processor</p>
+                        <p className="text-xs">{viewingDetail.spesifikasi_processor}</p>
+                      </div>
+                    )}
+
+                    {viewingDetail.jenis_barang && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">Jenis Barang</p>
+                        <p className="text-xs">{viewingDetail.jenis_barang.nama}</p>
+                      </div>
+                    )}
+
+                    {viewingDetail.kapasitas_ram && viewingDetail.kapasitas_ram !== '-' && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">RAM</p>
+                        <p className="text-xs">{viewingDetail.kapasitas_ram}</p>
+                      </div>
+                    )}
+
+                    {viewingDetail.merk && viewingDetail.merk !== '-' && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">Merk</p>
+                        <p className="text-xs">{viewingDetail.merk}</p>
+                      </div>
+                    )}
+
+                    {viewingDetail.perangkat_storage && viewingDetail.perangkat_storage.length > 0 && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">Storage</p>
+                        <div className="space-y-0.5">
+                          {viewingDetail.perangkat_storage.map((storage, index) => (
+                            <div key={storage.id || index} className="flex items-center gap-1.5 text-xs">
+                              <span className="bg-blue-900 text-blue-200 px-1 py-0.5 rounded text-[10px] font-medium">
+                                {storage.jenis_storage}
+                              </span>
+                              <span>{storage.kapasitas} GB</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {viewingDetail.petugas && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">Petugas Entry</p>
+                        <p className="text-xs">{viewingDetail.petugas.full_name}</p>
+                      </div>
+                    )}
+
+                    {viewingDetail.mac_ethernet && viewingDetail.mac_ethernet !== '-' && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">MAC Ethernet</p>
+                        <p className="text-xs">{viewingDetail.mac_ethernet}</p>
+                      </div>
+                    )}
+
+                    {/* Tanggal Entry - always show */}
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Tanggal Entry</p>
+                      <p className="text-xs">{formatDate(viewingDetail.tanggal_entry)}</p>
                     </div>
-                  </div>
-                )}
 
-                {/* MAC Address Ethernet */}
-                {viewingDetail.mac_ethernet && viewingDetail.mac_ethernet !== '-' && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">MAC Ethernet</p>
-                    <p className="text-sm font-mono">{viewingDetail.mac_ethernet}</p>
-                  </div>
-                )}
+                    {viewingDetail.mac_wireless && viewingDetail.mac_wireless !== '-' && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">MAC Wireless</p>
+                        <p className="text-xs">{viewingDetail.mac_wireless}</p>
+                      </div>
+                    )}
 
-                {/* MAC Address Wireless */}
-                {viewingDetail.mac_wireless && viewingDetail.mac_wireless !== '-' && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">MAC Wireless</p>
-                    <p className="text-sm font-mono">{viewingDetail.mac_wireless}</p>
-                  </div>
-                )}
+                    {viewingDetail.serial_number_monitor && viewingDetail.serial_number_monitor !== '-' && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">SN Monitor</p>
+                        <p className="text-xs">{viewingDetail.serial_number_monitor}</p>
+                      </div>
+                    )}
 
-                {/* IP Ethernet */}
-                {viewingDetail.ip_ethernet && viewingDetail.ip_ethernet !== '-' && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">IP Ethernet</p>
-                    <p className="text-sm font-mono">{viewingDetail.ip_ethernet}</p>
-                  </div>
-                )}
+                    {viewingDetail.ip_ethernet && viewingDetail.ip_ethernet !== '-' && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">IP Ethernet</p>
+                        <p className="text-xs">{viewingDetail.ip_ethernet}</p>
+                      </div>
+                    )}
 
-                {/* IP Wireless */}
-                {viewingDetail.ip_wireless && viewingDetail.ip_wireless !== '-' && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">IP Wireless</p>
-                    <p className="text-sm font-mono">{viewingDetail.ip_wireless}</p>
-                  </div>
-                )}
-
-                {/* Serial Number Monitor */}
-                {viewingDetail.serial_number_monitor && viewingDetail.serial_number_monitor !== '-' && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">SN Monitor</p>
-                    <p className="text-sm">{viewingDetail.serial_number_monitor}</p>
-                  </div>
-                )}
-
-                {/* Petugas */}
-                {viewingDetail.petugas && (
-                  <div>
-                    <p className="text-xs text-gray-500 mb-0.5">Petugas Entry</p>
-                    <p className="text-sm">{viewingDetail.petugas.full_name}</p>
-                  </div>
-                )}
-
-                {/* Tanggal Entry */}
-                <div>
-                  <p className="text-xs text-gray-500 mb-0.5">Tanggal Entry</p>
-                  <p className="text-sm">{formatDate(viewingDetail.tanggal_entry)}</p>
-                </div>
+                    {viewingDetail.ip_wireless && viewingDetail.ip_wireless !== '-' && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-0.5">IP Wireless</p>
+                        <p className="text-xs">{viewingDetail.ip_wireless}</p>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {/* HISTORY TAB */}
                 {detailTab === 'history' && (
-                  <div>
+                  <div key="tab-history" className="animate-tab-slide">
                     {loadingHistory ? (
                       <div className="flex items-center justify-center py-12">
                         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-500"></div>
                       </div>
                     ) : historyData.length === 0 ? (
                       <div className="text-center py-12">
-                        <p className="text-sm text-gray-400">Belum ada riwayat perbaikan</p>
+                        <p className="text-xs text-gray-400">Belum ada riwayat perbaikan</p>
                         <p className="text-xs text-gray-500 mt-1">Perangkat ini belum pernah diperbaiki</p>
                       </div>
                     ) : (
                       <div className="space-y-2">
                         <div className="bg-cyan-900/20 border border-cyan-700 rounded-lg p-2.5 mb-3">
                           <p className="text-xs text-cyan-300">
-                            📊 Total: <span className="text-lg font-bold text-cyan-400">{historyData.length}</span> kali diperbaiki
+                            📊 Total: <span className="text-base font-bold text-cyan-400">{historyData.length}</span> kali diperbaiki
                           </p>
                         </div>
 
@@ -1838,7 +1867,7 @@ const StokOpnam = () => {
                           <div key={history.task_id} className="bg-gray-800 border border-gray-700 rounded-lg p-2.5 hover:border-cyan-600 transition">
                             <div className="flex items-start justify-between mb-1.5">
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-bold text-cyan-500">#{index + 1}</span>
+                                <span className="text-xs font-bold text-cyan-500">#{index + 1}</span>
                                 <div>
                                   <p className="text-xs font-mono font-bold text-yellow-300">{history.task_number}</p>
                                 </div>
@@ -1849,7 +1878,7 @@ const StokOpnam = () => {
                               </div>
                             </div>
 
-                            <h3 className="text-sm font-semibold text-white mb-1">{history.task_title}</h3>
+                            <h3 className="text-xs font-semibold text-white mb-1">{history.task_title}</h3>
                             
                             {history.task_description && (
                               <p className="text-xs text-gray-300 mb-2 line-clamp-2">{history.task_description}</p>
@@ -1880,14 +1909,14 @@ const StokOpnam = () => {
 
                 {/* HISTORY MUTASI TAB */}
                 {detailTab === 'mutasi' && (
-                  <div>
+                  <div key="tab-mutasi" className="animate-tab-slide">
                     {loadingMutasiHistory ? (
                       <div className="flex items-center justify-center py-12">
                         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-500"></div>
                       </div>
                     ) : mutasiHistory.length === 0 ? (
                       <div className="text-center py-12">
-                        <p className="text-sm text-gray-400">Belum ada riwayat mutasi</p>
+                        <p className="text-xs text-gray-400">Belum ada riwayat mutasi</p>
                         <p className="text-xs text-gray-500 mt-1">Perangkat ini belum pernah dimutasi</p>
                       </div>
                     ) : (
@@ -1899,7 +1928,7 @@ const StokOpnam = () => {
                           >
                             <div className="flex items-start justify-between mb-2">
                               <div className="flex items-center gap-2">
-                                <span className="text-xl">🔄</span>
+                                <span className="text-base">🔄</span>
                                 <div>
                                   <p className="text-xs text-gray-500">
                                     {new Date(mutasi.tanggal_mutasi).toLocaleDateString('id-ID', {
@@ -1923,7 +1952,7 @@ const StokOpnam = () => {
                             {/* Mutasi Info */}
                             <div className="mt-3 space-y-2">
                               {/* From */}
-                              <div className="flex items-center gap-2 text-sm">
+                              <div className="flex items-center gap-2 text-xs">
                                 <span className="text-gray-500">Dari:</span>
                                 <span className="text-red-400 font-medium">
                                   {mutasi.lokasi_lama_nama} ({mutasi.lokasi_lama_kode})
@@ -1935,12 +1964,12 @@ const StokOpnam = () => {
                               </div>
 
                               {/* Arrow */}
-                              <div className="text-center text-gray-600">
+                              <div className="text-center text-gray-600 text-xs">
                                 ↓
                               </div>
 
                               {/* To */}
-                              <div className="flex items-center gap-2 text-sm">
+                              <div className="flex items-center gap-2 text-xs">
                                 <span className="text-gray-500">Ke:</span>
                                 <span className="text-green-400 font-medium">
                                   {mutasi.lokasi_baru_nama} ({mutasi.lokasi_baru_kode})
@@ -1955,7 +1984,7 @@ const StokOpnam = () => {
                               {mutasi.keterangan && (
                                 <div className="mt-3 pt-3 border-t border-gray-700">
                                   <p className="text-xs text-gray-500 mb-1">Keterangan:</p>
-                                  <p className="text-sm text-gray-300">{mutasi.keterangan}</p>
+                                  <p className="text-xs text-gray-300">{mutasi.keterangan}</p>
                                 </div>
                               )}
                             </div>
@@ -1967,19 +1996,44 @@ const StokOpnam = () => {
                 )}
               </div>
 
-              {/* Close Button */}
-              <div className="p-3 border-t border-gray-700 flex justify-end">
-                <button
-                  onClick={() => {
-                    setViewingDetail(null);
-                    setHistoryData([]);
-                    setMutasiHistory([]);
-                    setDetailTab('detail');
-                  }}
-                  className="px-5 py-1.5 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition"
-                >
-                  Tutup
-                </button>
+              {/* Fixed Footer - Action Buttons */}
+              <div className="flex-shrink-0 p-3 border-t border-gray-800 flex justify-center items-center gap-2 bg-black shadow-[0_-8px_20px_rgba(0,0,0,0.6)]">
+                {canEdit && (
+                  <button
+                    onClick={() => {
+                      handleEdit(viewingDetail);
+                      handleCloseDetail();
+                    }}
+                    className="px-3 py-1.5 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition flex items-center gap-1.5"
+                  >
+                    <PencilSquareIcon className="w-3.5 h-3.5" />
+                    Edit
+                  </button>
+                )}
+                {canMutasi && (
+                  <button
+                    onClick={() => {
+                      handleOpenMutasi(viewingDetail);
+                      handleCloseDetail();
+                    }}
+                    className="px-3 py-1.5 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition flex items-center gap-1.5"
+                  >
+                    <ArrowsRightLeftIcon className="w-3.5 h-3.5" />
+                    Mutasi
+                  </button>
+                )}
+                {canDelete && (
+                  <button
+                    onClick={() => {
+                      handleDeletePerangkat(viewingDetail);
+                      handleCloseDetail();
+                    }}
+                    className="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-500 text-white rounded-lg transition flex items-center gap-1.5"
+                  >
+                    <TrashIcon className="w-3.5 h-3.5" />
+                    Hapus
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -1987,12 +2041,16 @@ const StokOpnam = () => {
 
         {/* EDIT FORM MODAL */}
         {editingId && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 my-8">
-              <div className="flex justify-between items-start mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  ✏️ Edit Perangkat
-                </h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto modal-backdrop-enter">
+            <div className="bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full max-h-[90vh] md:w-[480px] md:max-h-[90vh] my-4 md:my-8 font-['Open_Sans'] flex flex-col overflow-hidden modal-content-enter">
+              {/* Fixed Header */}
+              <div className="flex-shrink-0 flex justify-between items-start px-4 py-3 bg-black border-b border-gray-800">
+                <div className="min-w-0">
+                  <span className="font-bold text-white text-sm">Edit Perangkat</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs text-gray-400">{editForm.id_perangkat}</span>
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() => {
@@ -2000,19 +2058,15 @@ const StokOpnam = () => {
                     setEditForm({});
                     setOriginalLokasiKode(null);
                   }}
-                  className="text-gray-400 hover:text-gray-600 transition text-2xl font-bold leading-none"
+                  className="flex-shrink-0 text-gray-400 hover:text-white transition text-lg font-bold leading-none ml-2"
                   title="Tutup"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                <p className="text-sm text-blue-800">
-                  <strong>ID Perangkat:</strong> {editForm.id_perangkat}
-                </p>
-              </div>
-
+              {/* Scrollable Content Area */}
+              <div className="flex-1 overflow-y-auto modern-scrollbar p-4 compact-inputs">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -2020,26 +2074,26 @@ const StokOpnam = () => {
                 }}
                 className="space-y-4"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {/* Nama Perangkat */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nama Perangkat *
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
+                      Nama Perangkat <span className="text-yellow-300">*</span>
                     </label>
                     <input
                       type="text"
                       required
                       disabled
                       value={editForm.nama_perangkat || ''}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-100 cursor-not-allowed"
+                      className="w-full px-2.5 py-1.5 bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 opacity-50 cursor-not-allowed"
                       title="Nama perangkat otomatis diubah saat lokasi diubah"
                     />
                   </div>
 
                   {/* Serial Number */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Serial Number *
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
+                      Serial Number <span className="text-yellow-300">*</span>
                     </label>
                     <input
                       type="text"
@@ -2048,14 +2102,14 @@ const StokOpnam = () => {
                       onChange={(e) =>
                         setEditForm({ ...editForm, serial_number: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2.5 py-1.5 bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
                     />
                   </div>
 
                   {/* Jenis Perangkat */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Jenis Perangkat *
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
+                      Jenis Perangkat <span className="text-yellow-300">*</span>
                     </label>
                     <select
                       required
@@ -2064,7 +2118,7 @@ const StokOpnam = () => {
                       onChange={(e) =>
                         setEditForm({ ...editForm, jenis_perangkat_kode: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-100 cursor-not-allowed"
+                      className="w-full px-2.5 py-1.5 bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 opacity-50 cursor-not-allowed"
                       title="Jenis Perangkat tidak dapat diubah"
                     >
                       <option value="">-- Pilih Jenis Perangkat --</option>
@@ -2078,8 +2132,8 @@ const StokOpnam = () => {
 
                   {/* Lokasi */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Lokasi *
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
+                      Lokasi <span className="text-yellow-300">*</span>
                     </label>
                     <select
                       required
@@ -2093,7 +2147,7 @@ const StokOpnam = () => {
                           nama_perangkat: newNamaPerangkat
                         });
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2.5 py-1.5 bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
                     >
                       <option value="">-- Pilih Lokasi --</option>
                       {lokasiList.map((lokasi) => (
@@ -2106,7 +2160,7 @@ const StokOpnam = () => {
 
                   {/* Jenis Barang */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
                       Jenis Barang
                     </label>
                     <select
@@ -2114,7 +2168,7 @@ const StokOpnam = () => {
                       onChange={(e) =>
                         setEditForm({ ...editForm, jenis_barang_id: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2.5 py-1.5 bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
                     >
                       <option value="">-- Pilih Jenis Barang --</option>
                       {getFilteredJenisBarang(editForm.jenis_perangkat_kode).map((jenis) => (
@@ -2127,7 +2181,7 @@ const StokOpnam = () => {
 
                   {/* Merk */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
                       Merk
                     </label>
                     <input
@@ -2136,13 +2190,13 @@ const StokOpnam = () => {
                       onChange={(e) =>
                         setEditForm({ ...editForm, merk: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2.5 py-1.5 bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
                     />
                   </div>
 
                   {/* ID Remote Access */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
                       ID Remote Access
                     </label>
                     <input
@@ -2151,13 +2205,13 @@ const StokOpnam = () => {
                       onChange={(e) =>
                         setEditForm({ ...editForm, id_remoteaccess: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2.5 py-1.5 bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
                     />
                   </div>
 
                   {/* Processor */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
                       Spesifikasi Processor
                     </label>
                     <input
@@ -2166,13 +2220,13 @@ const StokOpnam = () => {
                       onChange={(e) =>
                         setEditForm({ ...editForm, spesifikasi_processor: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2.5 py-1.5 bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
                     />
                   </div>
 
                   {/* RAM */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
                       Kapasitas RAM
                     </label>
                     <input
@@ -2182,7 +2236,7 @@ const StokOpnam = () => {
                       onChange={(e) =>
                         setEditForm({ ...editForm, kapasitas_ram: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2.5 py-1.5 bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
                     />
                   </div>
 
@@ -2190,7 +2244,7 @@ const StokOpnam = () => {
 
                 {/* Storage (Full Width) */}
                 <div className="col-span-full">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-[10px] font-medium text-gray-400 mb-1">
                     Storage (Opsional)
                   </label>
                   <StorageInput
@@ -2201,11 +2255,11 @@ const StokOpnam = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
                   {/* MAC Ethernet */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
                       MAC Ethernet
                     </label>
                     <MACAddressInput
@@ -2219,7 +2273,7 @@ const StokOpnam = () => {
 
                   {/* MAC Wireless */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
                       MAC Wireless
                     </label>
                     <MACAddressInput
@@ -2233,7 +2287,7 @@ const StokOpnam = () => {
 
                   {/* IP Ethernet */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
                       IP Ethernet
                     </label>
                     <IPAddressInput
@@ -2247,7 +2301,7 @@ const StokOpnam = () => {
 
                   {/* IP Wireless */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
                       IP Wireless
                     </label>
                     <IPAddressInput
@@ -2261,7 +2315,7 @@ const StokOpnam = () => {
 
                   {/* Serial Number Monitor */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
                       Serial Number Monitor
                     </label>
                     <input
@@ -2270,13 +2324,13 @@ const StokOpnam = () => {
                       onChange={(e) =>
                         setEditForm({ ...editForm, serial_number_monitor: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2.5 py-1.5 bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
                     />
                   </div>
 
                   {/* Status Perangkat */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-[10px] font-medium text-gray-400 mb-1">
                       Status Perangkat
                     </label>
                     <select
@@ -2284,35 +2338,37 @@ const StokOpnam = () => {
                       onChange={(e) =>
                         setEditForm({ ...editForm, status_perangkat: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-2.5 py-1.5 bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
                     >
-                      <option value="layak">✅ Layak</option>
-                      <option value="rusak">❌ Tidak Layak (Rusak)</option>
+                      <option value="layak">Layak</option>
+                      <option value="rusak">Tidak Layak (Rusak)</option>
                     </select>
                   </div>
                 </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3 justify-end pt-4 border-t mt-6">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingId(null);
-                      setEditForm({});
-                      setOriginalLokasiKode(null);
-                    }}
-                    className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                  >
-                    💾 Simpan Perubahan
-                  </button>
-                </div>
               </form>
+              </div>
+
+              {/* Fixed Footer - Action Buttons */}
+              <div className="flex-shrink-0 p-3 border-t border-gray-800 flex justify-end items-center gap-2 bg-black shadow-[0_-8px_20px_rgba(0,0,0,0.6)]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingId(null);
+                    setEditForm({});
+                    setOriginalLokasiKode(null);
+                  }}
+                  className="px-4 py-1.5 text-xs border border-gray-700 rounded-lg text-gray-400 hover:text-white hover:border-gray-500 transition"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveEdit}
+                  className="px-4 py-1.5 text-xs bg-green-600 text-white rounded-lg hover:bg-green-500 transition"
+                >
+                  Simpan Perubahan
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -2449,181 +2505,115 @@ const StokOpnam = () => {
           </div>
         )}
 
-        {/* Search Bar - Sticky (Freeze Panes) */}
-        <div className="sticky top-16 lg:top-0 z-10 lg:z-30 bg-slate-950/80 backdrop-blur-md pb-2 pt-1 border-b border-gray-800 shadow-[0_10px_24px_rgba(0,0,0,0.35)]">
-          <div className="bg-gray-800/95 rounded-xl shadow-lg p-3 border border-gray-700">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              {/* Search input */}
-              <div className="flex items-center gap-3 flex-1 min-w-[240px]">
-                <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Cari perangkat (ID, Nama, Jenis, Merk, Lokasi, Serial, IP, Petugas)..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-1 bg-gray-700 border border-gray-600 text-gray-100 px-3 py-1.5 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent placeholder-gray-400"
-                />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="text-gray-400 hover:text-white transition"
-                    title="Clear search"
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-
-              {/* Total + Items per page + Refresh */}
-              <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                <div className="text-sm text-gray-400">
-                  {searchTerm ? (
-                    <>
-                      Ditemukan <span className="font-semibold text-cyan-400">{filteredPerangkat.length}</span> data
-                    </>
-                  ) : (
-                    <>
-                      Total <span className="font-semibold text-cyan-400">{filteredPerangkat.length}</span> data
-                    </>
-                  )}
-                </div>
-                <span className="text-gray-600" aria-hidden="true">|</span>
-                <label className="text-sm text-gray-400">Tampilkan:</label>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => handleItemsPerPageChange(e.target.value)}
-                  className="bg-gray-700 border border-gray-600 text-gray-100 px-3 py-1.5 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                >
-                  <option value="10">10 per halaman</option>
-                  <option value="20">20 per halaman</option>
-                  <option value="50">50 per halaman</option>
-                  <option value="all">Semua data</option>
-                </select>
-                <button
-                  type="button"
-                  onClick={handleRefreshData}
-                  disabled={loading}
-                  className="inline-flex items-center gap-2 bg-cyan-600/15 border border-cyan-500/40 text-cyan-200 px-3 py-1.5 rounded-lg text-sm hover:bg-cyan-600/25 hover:border-cyan-400/60 focus:ring-2 focus:ring-cyan-500 focus:border-transparent disabled:opacity-60 disabled:cursor-not-allowed"
-                  title="Refresh data"
-                >
-                  <ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                  <span className="hidden sm:inline">Refresh</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Table - Desktop View */}
-        <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-700">
+        <div className="bg-transparent rounded-md overflow-hidden">
           {loading ? (
-            <div className="flex items-center justify-center h-40">
-              <div className="flex items-center gap-3 text-gray-300">
-                <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-500 border-t-cyan-400"></div>
-                <span className="text-sm">Loading data perangkat...</span>
+            <>
+              {/* Desktop Skeleton */}
+              <div className="hidden lg:block">
+                <table className="min-w-full" style={{ fontFamily: "'Open Sans', sans-serif" }}>
+                  <thead className="bg-transparent">
+                    <tr>
+                      {['ID Perangkat','Nama Perangkat','ID Remote','Tanggal Entry','Petugas','Jenis Perangkat','Jenis Barang','Status'].map((h) => (
+                        <th key={h} className="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1a1a1a]">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <tr key={i}>
+                        {Array.from({ length: 8 }).map((_, j) => (
+                          <td key={j} className="px-3 py-2">
+                            <div className="h-3 bg-[#1a1a1a] rounded animate-pulse" style={{ width: j === 1 ? '120px' : j === 7 ? '24px' : '80px', margin: '0 auto' }} />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </div>
+              {/* Mobile Skeleton */}
+              <div className="lg:hidden divide-y divide-[#1a1a1a]">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="px-3 py-1.5 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="h-3 w-32 bg-[#1a1a1a] rounded animate-pulse" />
+                      <div className="h-3 w-16 bg-[#1a1a1a] rounded animate-pulse" />
+                    </div>
+                    <div className="h-2.5 w-20 bg-[#1a1a1a] rounded animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
             <>
-          <div className="hidden lg:block overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-700">
-              <thead className="bg-gray-900">
+          <div className="hidden lg:flex lg:justify-center overflow-x-auto">
+            <table className="w-auto" style={{ fontFamily: "'Open Sans', sans-serif" }}>
+              <thead className="bg-transparent">
                 <tr>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-white uppercase">
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase whitespace-nowrap">
                     ID Perangkat
                   </th>
-                  <HeaderMenu column="nama_perangkat" label="Nama Perangkat" placeholder="Cari nama perangkat..." />
-                  <th className="px-4 py-3 text-center text-xs font-medium text-white uppercase">
-                    ID Remote Access
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase whitespace-nowrap">
+                    Nama Perangkat
                   </th>
-                  <HeaderMenu column="tanggal_entry" label="Tanggal Entry" placeholder="Cari tanggal..." />
-                  <HeaderMenu column="petugas" label="Petugas" placeholder="Cari nama petugas..." />
-                  <HeaderMenu column="jenis_perangkat" label="Jenis Perangkat" placeholder="Cari jenis perangkat..." />
-                  <HeaderMenu column="jenis_barang" label="Jenis Barang" placeholder="Cari jenis barang..." />
-                  <HeaderMenu column="status" label="Status" placeholder="Layak / Rusak" />
-                  <th className="px-4 py-3 text-center text-xs font-medium text-white uppercase">
-                    Aksi
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase whitespace-nowrap">
+                    ID Remote
+                  </th>
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase whitespace-nowrap">
+                    Tanggal Entry
+                  </th>
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase whitespace-nowrap">
+                    Petugas
+                  </th>
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase whitespace-nowrap">
+                    Jenis Perangkat
+                  </th>
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase whitespace-nowrap">
+                    Jenis Barang
+                  </th>
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase whitespace-nowrap">
+                    Status
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-gray-800 divide-y divide-gray-700">
+              <tbody className="bg-transparent divide-y divide-[#1a1a1a]">
                 {paginatedPerangkat.map((item) => (
-                  <tr key={item.id} className="group hover:bg-gray-700 transition-colors">
-                    <td className="px-4 py-3 text-center text-sm font-mono font-bold text-[#ffae00]">
+                  <tr key={item.id} className="group hover:bg-[#262626] transition-colors">
+                    <td className="px-3 py-2 text-center text-xs whitespace-nowrap">
                       <button
                         onClick={() => handleViewDetail(item)}
-                        className="hover:underline cursor-pointer"
+                        className="text-white font-bold hover:text-gray-300 transition-colors cursor-pointer"
                         title="Lihat detail & history"
                       >
                         {item.id_perangkat}
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-center text-sm text-white">{item.nama_perangkat}</td>
-                    <td className="px-4 py-3 text-center text-sm text-white">
+                    <td className="px-3 py-2 text-center text-xs text-white whitespace-nowrap">{item.nama_perangkat}</td>
+                    <td className="px-3 py-2 text-center text-xs text-white whitespace-nowrap">
                       {item.id_remoteaccess || '-'}
                     </td>
-                    <td className="px-4 py-3 text-center text-xs text-white">
+                    <td className="px-3 py-2 text-center text-xs text-white whitespace-nowrap">
                       {formatDate(item.tanggal_entry)}
                     </td>
-                    <td className="px-4 py-3 text-center text-sm text-white">
+                    <td className="px-3 py-2 text-center text-xs text-white whitespace-nowrap">
                       {item.petugas?.full_name || '-'}
                     </td>
-                    <td className="px-4 py-3 text-center text-sm text-white">
+                    <td className="px-3 py-2 text-center text-xs text-white whitespace-nowrap">
                       {item.jenis_perangkat?.nama || '-'}
                     </td>
-                    <td className="px-4 py-3 text-center text-sm text-white">
+                    <td className="px-3 py-2 text-center text-xs text-white whitespace-nowrap">
                       {item.jenis_barang?.nama || '-'}
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`text-sm font-medium ${
-                        item.status_perangkat === 'layak' 
-                          ? 'text-green-500' 
-                          : 'text-red-400'
-                      }`}>
-                        {item.status_perangkat === 'layak' ? 'Layak' : item.status_perangkat === 'rusak' ? 'Rusak' : (item.status_perangkat || '-')}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center text-sm">
-                      <div className="flex gap-2 justify-center">
-                        <button
-                          onClick={() => handleViewDetail(item)}
-                          className="text-blue-400 hover:text-blue-300"
-                          title="View detail"
-                        >
-                          <MagnifyingGlassPlusIcon className="w-5 h-5" />
-                        </button>
-                        {canEdit && (
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className="text-cyan-400 hover:text-cyan-300"
-                            title="Edit perangkat"
-                          >
-                            <PencilSquareIcon className="w-5 h-5" />
-                          </button>
-                        )}
-                        {canMutasi && (
-                          <button
-                            onClick={() => handleOpenMutasi(item)}
-                            className="text-green-400 hover:text-green-300"
-                            title="Mutasi perangkat"
-                          >
-                            <ArrowsRightLeftIcon className="w-5 h-5" />
-                          </button>
-                        )}
-                        {canDelete && (
-                          <button
-                            onClick={() => handleDeletePerangkat(item)}
-                            className="text-red-400 hover:text-red-300"
-                            title="Hapus perangkat"
-                          >
-                            <TrashIcon className="w-5 h-5" />
-                          </button>
-                        )}
-                      </div>
+                    <td className="px-3 py-2 text-center whitespace-nowrap">
+                      {item.status_perangkat === 'layak' ? (
+                        <CheckBadgeIcon className="w-5 h-5 text-white mx-auto" />
+                      ) : item.status_perangkat === 'rusak' ? (
+                        <ExclamationTriangleIcon className="w-5 h-5 text-red-500 mx-auto" />
+                      ) : (
+                        <span className="text-xs text-gray-400">-</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -2632,64 +2622,26 @@ const StokOpnam = () => {
           </div>
 
           {/* Mobile View - Card */}
-          <div className="lg:hidden divide-y divide-gray-700">
+          <div className="lg:hidden divide-y divide-[#1a1a1a]" style={{ fontFamily: "'Open Sans', sans-serif" }}>
             {paginatedPerangkat.map((item) => (
-              <div key={item.id} className="p-4 hover:bg-gray-700 transition-colors">
-                <div className="flex justify-between items-start gap-3">
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        onClick={() => handleViewDetail(item)}
-                        className="inline-flex items-center justify-center h-8 min-w-[88px] px-3 rounded-lg text-sm font-mono font-bold text-[#ffae00] bg-gray-900 hover:bg-gray-700 transition"
-                      >
-                        {item.id_perangkat}
-                      </button>
-                      <span className="inline-flex items-center justify-center h-8 min-w-[88px] px-3 rounded-lg text-sm text-gray-200 bg-gray-900">
-                        {item.jenis_barang?.nama || '-'}
-                      </span>
-                    </div>
-                    <div className="space-y-1 text-sm text-white">
-                      <p>
-                        <span className="font-medium">Tanggal:</span>{' '}
-                        {formatDate(item.tanggal_entry)}
-                      </p>
-                      <p>
-                        <span className="font-medium">Lokasi:</span>{' '}
-                        {item.lokasi?.nama || item.lokasi?.kode || '-'}
-                      </p>
-                      <p>
-                        <span className="font-medium">Petugas:</span>{' '}
-                        {item.petugas?.full_name || '-'}
-                      </p>
-                    </div>
+              <div 
+                key={item.id} 
+                className="px-3 py-1.5 hover:bg-[#262626] transition-colors cursor-pointer"
+                onClick={() => handleViewDetail(item)}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-white font-bold text-xs">{item.nama_perangkat}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-gray-500">{formatDate(item.tanggal_entry)}</span>
+                    {item.status_perangkat === 'layak' ? (
+                      <CheckBadgeIcon className="w-3.5 h-3.5 text-white" />
+                    ) : item.status_perangkat === 'rusak' ? (
+                      <ExclamationTriangleIcon className="w-3.5 h-3.5 text-red-500" />
+                    ) : null}
                   </div>
-                  <div className="flex gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => handleViewDetail(item)}
-                      className="text-blue-400 hover:text-blue-300 transition"
-                      title="View detail"
-                    >
-                      <MagnifyingGlassPlusIcon className="w-5 h-5" />
-                    </button>
-                    {canEdit && (
-                      <button
-                        onClick={() => handleEdit(item)}
-                        className="text-cyan-400 hover:text-cyan-300 transition"
-                        title="Edit perangkat"
-                      >
-                        <PencilSquareIcon className="w-5 h-5" />
-                      </button>
-                    )}
-                    {canMutasi && (
-                      <button
-                        onClick={() => handleOpenMutasi(item)}
-                        className="text-green-400 hover:text-green-300 transition"
-                        title="Mutasi perangkat"
-                      >
-                        <ArrowsRightLeftIcon className="w-5 h-5" />
-                      </button>
-                    )}
-                  </div>
+                </div>
+                <div className="text-gray-500">
+                  {item.jenis_barang?.nama || '-'}
                 </div>
               </div>
             ))}
@@ -2699,30 +2651,29 @@ const StokOpnam = () => {
 
           {/* Pagination Controls */}
           {filteredPerangkat.length > 0 && !isShowingAll && totalPages > 1 && (
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-gray-800 rounded-lg border border-gray-700">
+            <div className="mt-2 flex flex-col sm:flex-row items-center justify-between lg:justify-center gap-1 lg:gap-8">
               {/* Info */}
-              <div className="text-sm text-gray-400">
-                Halaman <span className="font-semibold text-white">{currentPage}</span> dari <span className="font-semibold text-white">{totalPages}</span> — Menampilkan <span className="font-semibold text-white">{startIndex + 1}</span>-<span className="font-semibold text-white">{Math.min(endIndex, sortedPerangkat.length)}</span> dari <span className="font-semibold text-white">{sortedPerangkat.length}</span> data
+              <div className="text-[10px] text-gray-500">
+                {currentPage}/{totalPages} — {startIndex + 1}-{Math.min(endIndex, sortedPerangkat.length)} dari {sortedPerangkat.length}
               </div>
 
               {/* Page Numbers */}
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-0.5">
                 {/* Previous Button */}
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`h-10 min-w-10 px-3 inline-flex items-center justify-center rounded-lg text-sm font-medium transition ${
+                  className={`px-1.5 py-0.5 text-[10px] transition ${
                     currentPage === 1
-                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                      : 'bg-gray-700 text-white hover:bg-gray-600'
+                      ? 'text-gray-600 cursor-not-allowed'
+                      : 'text-gray-400 hover:text-white'
                   }`}
                 >
-                  <span className="sm:hidden">←</span>
-                  <span className="hidden sm:inline">← Prev</span>
+                  ←
                 </button>
 
                 {/* Page Numbers */}
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center space-x-0.5">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
                     // Show first, last, current, and adjacent pages
                     if (
@@ -2734,10 +2685,10 @@ const StokOpnam = () => {
                         <button
                           key={page}
                           onClick={() => handlePageChange(page)}
-                          className={`h-10 min-w-10 px-3 inline-flex items-center justify-center rounded-lg text-sm font-medium transition ${
+                          className={`px-1.5 py-0.5 text-[10px] transition ${
                             currentPage === page
-                              ? 'bg-cyan-600 text-white'
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                              ? 'text-white'
+                              : 'text-gray-500 hover:text-white'
                           }`}
                         >
                           {page}
@@ -2748,7 +2699,7 @@ const StokOpnam = () => {
                       page === currentPage + 2
                     ) {
                       return (
-                        <span key={page} className="text-gray-500 px-2">
+                        <span key={page} className="text-gray-600 px-0.5 text-[10px]">
                           ...
                         </span>
                       );
@@ -2761,14 +2712,13 @@ const StokOpnam = () => {
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className={`h-10 min-w-10 px-3 inline-flex items-center justify-center rounded-lg text-sm font-medium transition ${
+                  className={`px-1.5 py-0.5 text-[10px] transition ${
                     currentPage === totalPages
-                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                      : 'bg-gray-700 text-white hover:bg-gray-600'
+                      ? 'text-gray-600 cursor-not-allowed'
+                      : 'text-gray-400 hover:text-white'
                   }`}
                 >
-                  <span className="sm:hidden">→</span>
-                  <span className="hidden sm:inline">Next →</span>
+                  →
                 </button>
               </div>
             </div>
@@ -2780,6 +2730,22 @@ const StokOpnam = () => {
             </div>
           )}
         </div>
+
+        {/* Mobile FAB - Floating Add Button above bottom bar */}
+        {canEdit && (
+          <button
+            onClick={() => {
+              setShowAddForm(true);
+              setAddStep(1);
+            }}
+            className="lg:hidden fixed right-5 bottom-20 z-50 flex items-center justify-center w-8 h-8 rounded-full bg-white text-black shadow-lg shadow-black/50 active:scale-95 transition-transform"
+            aria-label="Tambah Perangkat"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </button>
+        )}
       </div>
     </Layout>
   );

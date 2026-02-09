@@ -20,7 +20,7 @@
      * Controls primary buttons, active states, links, focus rings.
      * 190 = cyan/blue (default), 220 = blue, 270 = purple, 340 = pink, 160 = teal
      */
-    --accent-hue: 270;
+    --accent-hue: 190;
     
     /* 
      * FUNCTIONAL SEMANTIC HUES
@@ -150,56 +150,6 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 @layer utilities {
-  /* Hammer tap animation */
-  @keyframes hammer-tap {
-    0%, 100% { transform: rotate(0deg); }
-    20% { transform: rotate(-20deg); }
-    40% { transform: rotate(0deg); }
-    50% { transform: rotate(-15deg); }
-    65% { transform: rotate(0deg); }
-  }
-
-  .animate-hammer {
-    animation: hammer-tap 0.8s ease-in-out infinite;
-    transform-origin: bottom right;
-  }
-
-  /* Tab slide-in animation */
-  @keyframes tab-slide-in {
-    from {
-      opacity: 0;
-      transform: translateX(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  .animate-tab-slide {
-    animation: tab-slide-in 0.25s ease-out;
-  }
-
-  /* Compact form inputs - bypasses browser minimum font size */
-  .compact-inputs input,
-  .compact-inputs select,
-  .compact-inputs textarea {
-    font-size: 12px;
-    transform: scale(0.82);
-    transform-origin: left center;
-  }
-
-  /* Override browser autofill styles for dark theme */
-  input:-webkit-autofill,
-  input:-webkit-autofill:hover,
-  input:-webkit-autofill:focus,
-  input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 30px black inset !important;
-    -webkit-text-fill-color: hsl(var(--foreground)) !important;
-    caret-color: hsl(var(--foreground)) !important;
-    transition: background-color 5000s ease-in-out 0s;
-  }
-
   /* Custom scrollbar for dark theme */
   .scrollbar-thin::-webkit-scrollbar {
     width: 8px;
@@ -217,90 +167,4 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     @apply bg-muted-foreground/30;
   }
-
-  /* Modern scrollbar */
-  .modern-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-  }
-  
-  .modern-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  .modern-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  .modern-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
-  }
-  
-  .modern-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.35);
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   MODAL ANIMATIONS
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* Backdrop fade animations */
-@keyframes backdrop-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes backdrop-fade-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-/* Modal scale + fade animations */
-@keyframes modal-enter {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes modal-exit {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-}
-
-/* Animation classes */
-.modal-backdrop-enter {
-  animation: backdrop-fade-in 0.2s ease-out forwards;
-}
-
-.modal-backdrop-exit {
-  animation: backdrop-fade-out 0.15s ease-in forwards;
-}
-
-.modal-content-enter {
-  animation: modal-enter 0.2s ease-out forwards;
-}
-
-.modal-content-exit {
-  animation: modal-exit 0.15s ease-in forwards;
 }
