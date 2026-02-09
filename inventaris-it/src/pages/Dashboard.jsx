@@ -248,14 +248,14 @@ const Dashboard = () => {
                   </div>
 
                   {loading ? (
-                    <div className="space-y-2.5">
-                      {[1, 2, 3].map((i) => (
+                    <div className="space-y-3.5">
+                      {[1, 2, 3, 4, 5, 6].map((i) => (
                         <div key={i}>
-                          <div className="flex items-center justify-between gap-2 mb-1">
-                            <div className="h-3 rounded bg-zinc-800 animate-pulse" style={{ width: `${50 + i * 12}%` }} />
-                            <div className="h-3 w-8 rounded bg-zinc-800 animate-pulse flex-shrink-0" />
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <div className="h-4 rounded bg-zinc-800 animate-pulse" style={{ width: `${50 + i * 12}%` }} />
+                            <div className="h-4 w-10 rounded bg-zinc-800 animate-pulse flex-shrink-0" />
                           </div>
-                          <div className="h-1.5 w-full rounded-full bg-zinc-900 overflow-hidden">
+                          <div className="h-2 w-full rounded-full bg-zinc-900 overflow-hidden">
                             <div className="h-full rounded-full bg-zinc-800 animate-pulse" style={{ width: `${30 + i * 15}%` }} />
                           </div>
                         </div>
@@ -295,9 +295,9 @@ const Dashboard = () => {
                   {loadingDevices ? (
                     <>
                       {[1, 2, 3].map((i) => (
-                        <div key={i} className="flex-1 flex flex-col items-center justify-center py-3">
-                          <div className="h-5 w-10 rounded bg-zinc-800 animate-pulse mb-1" />
-                          <div className="h-3 w-16 rounded bg-zinc-800 animate-pulse" />
+                        <div key={i} className="flex-1 flex flex-col items-center justify-center py-4">
+                          <div className="h-9 w-16 rounded bg-zinc-800 animate-pulse mb-2" />
+                          <div className="h-3.5 w-28 rounded bg-zinc-800 animate-pulse" />
                         </div>
                       ))}
                     </>
@@ -371,11 +371,11 @@ const Dashboard = () => {
             </div>
 
             {loadingKategori ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center justify-between py-1.5">
-                    <div className="h-3 rounded bg-zinc-800 animate-pulse" style={{ width: `${40 + i * 15}%` }} />
-                    <div className="h-3 w-6 rounded bg-zinc-800 animate-pulse" />
+              <div className="space-y-2.5">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex items-center justify-between py-2">
+                    <div className="h-4 rounded bg-zinc-800 animate-pulse" style={{ width: `${40 + i * 15}%` }} />
+                    <div className="h-4 w-8 rounded bg-zinc-800 animate-pulse" />
                   </div>
                 ))}
               </div>

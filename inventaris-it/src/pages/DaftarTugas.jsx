@@ -523,8 +523,51 @@ const DaftarTugas = () => {
   if (loading) {
     return (
       <Layout hideTopBar>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
+        <div className="space-y-3 text-[11px]" style={{ fontFamily: "'Open Sans', sans-serif" }}>
+          {/* Tabs Skeleton */}
+          <div className="flex justify-center py-1">
+            <div className="flex gap-1 border border-zinc-800 rounded-sm p-0.5">
+              <div className="h-7 w-24 bg-zinc-800 rounded-sm animate-pulse" />
+              <div className="h-7 w-20 bg-[#1a1a1a] rounded-sm animate-pulse" />
+              <div className="h-7 w-22 bg-[#1a1a1a] rounded-sm animate-pulse" />
+            </div>
+          </div>
+
+          {/* Task Cards Skeleton */}
+          <div className="space-y-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-black border border-[#1a1a1a] rounded-lg px-2.5 pt-2.5 pb-2"
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+                  <div className="flex-1 min-w-0 space-y-2">
+                    {/* Task number + badges */}
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-16 bg-[#1a1a1a] rounded animate-pulse" />
+                      <div className="h-4 w-12 bg-[#1a1a1a] rounded-full animate-pulse" />
+                      <div className="h-4 w-16 bg-[#1a1a1a] rounded-full animate-pulse" />
+                    </div>
+
+                    {/* Title */}
+                    <div className="h-3 bg-[#1a1a1a] rounded animate-pulse" style={{ width: `${65 + i * 8}%` }} />
+
+                    {/* Metadata row */}
+                    <div className="flex flex-wrap gap-2.5">
+                      <div className="h-2.5 w-20 bg-[#1a1a1a] rounded animate-pulse" />
+                      <div className="h-2.5 w-24 bg-[#1a1a1a] rounded animate-pulse" />
+                      <div className="h-2.5 w-28 bg-[#1a1a1a] rounded animate-pulse" />
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex gap-2.5">
+                    <div className="h-7 w-20 bg-[#1a1a1a] rounded-lg animate-pulse" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </Layout>
     );

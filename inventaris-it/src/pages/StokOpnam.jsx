@@ -1187,7 +1187,7 @@ const StokOpnam = () => {
     <Layout>
       <div className="space-y-3 text-[11px]">
         {/* Search Bar and Add Button - sticky on mobile */}
-        <div className="sticky top-0 z-10 lg:static bg-black lg:bg-transparent py-3 lg:py-0 shadow-[0_10px_30px_rgba(0,0,0,1)] lg:shadow-none flex items-center justify-center gap-3">
+        <div className="sticky top-0 z-10 lg:static bg-black/30 backdrop-blur-md lg:bg-transparent lg:backdrop-blur-none py-3 lg:py-0 shadow-none flex items-center justify-center gap-3">
           <div className="flex items-center gap-1.5 border border-[#1a1a1a] rounded-md px-2 py-0.5">
             <MagnifyingGlassIcon className="w-4 h-4 text-gray-500" />
             <input
@@ -1229,7 +1229,7 @@ const StokOpnam = () => {
         {/* 2-STEP ADD FORM MODAL */}
         {showAddForm && (
           <div 
-            className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto ${
+            className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999] overflow-y-auto ${
               isAddFormClosing ? 'modal-backdrop-exit' : 'modal-backdrop-enter'
             }`}
             onClick={(e) => {
@@ -1617,7 +1617,7 @@ const StokOpnam = () => {
         {/* DETAIL VIEW MODAL WITH TABS */}
         {viewingDetail && (
           <div 
-            className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto ${
+            className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999] overflow-y-auto ${
               isDetailClosing ? 'modal-backdrop-exit' : 'modal-backdrop-enter'
             }`}
             onClick={(e) => {
@@ -1658,7 +1658,7 @@ const StokOpnam = () => {
                     </button>
                     <span className="text-gray-600">•</span>
                     {viewingDetail.status_perangkat === 'layak' ? (
-                      <CheckBadgeIcon className="w-4 h-4 text-white" />
+                      <CheckBadgeIcon className="w-4 h-4 text-blue-400" />
                     ) : (
                       <ExclamationTriangleIcon className="w-4 h-4 text-red-500" />
                     )}
@@ -2041,7 +2041,7 @@ const StokOpnam = () => {
 
         {/* EDIT FORM MODAL */}
         {editingId && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto modal-backdrop-enter">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999] overflow-y-auto modal-backdrop-enter">
             <div className="bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full max-h-[90vh] md:w-[480px] md:max-h-[90vh] my-4 md:my-8 font-['Open_Sans'] flex flex-col overflow-hidden modal-content-enter">
               {/* Fixed Header */}
               <div className="flex-shrink-0 flex justify-between items-start px-4 py-3 bg-black border-b border-gray-800">
@@ -2375,7 +2375,7 @@ const StokOpnam = () => {
 
         {/* MUTASI FORM MODAL */}
         {showMutasiModal && mutasiPerangkat && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
             <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6">
               <div className="flex justify-between items-start mb-6">
                 <div>
@@ -2521,11 +2521,11 @@ const StokOpnam = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1a1a1a]">
-                    {Array.from({ length: 8 }).map((_, i) => (
+                    {Array.from({ length: 12 }).map((_, i) => (
                       <tr key={i}>
                         {Array.from({ length: 8 }).map((_, j) => (
-                          <td key={j} className="px-3 py-2">
-                            <div className="h-3 bg-[#1a1a1a] rounded animate-pulse" style={{ width: j === 1 ? '120px' : j === 7 ? '24px' : '80px', margin: '0 auto' }} />
+                          <td key={j} className="px-3 py-3">
+                            <div className="h-4 bg-[#1a1a1a] rounded animate-pulse" style={{ width: j === 1 ? '120px' : j === 7 ? '24px' : '80px', margin: '0 auto' }} />
                           </td>
                         ))}
                       </tr>
@@ -2535,13 +2535,13 @@ const StokOpnam = () => {
               </div>
               {/* Mobile Skeleton */}
               <div className="lg:hidden divide-y divide-[#1a1a1a]">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="px-3 py-1.5 space-y-1.5">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="px-3 py-2.5 space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className="h-3 w-32 bg-[#1a1a1a] rounded animate-pulse" />
-                      <div className="h-3 w-16 bg-[#1a1a1a] rounded animate-pulse" />
+                      <div className="h-4 w-36 bg-[#1a1a1a] rounded animate-pulse" />
+                      <div className="h-3.5 w-20 bg-[#1a1a1a] rounded animate-pulse" />
                     </div>
-                    <div className="h-2.5 w-20 bg-[#1a1a1a] rounded animate-pulse" />
+                    <div className="h-3 w-24 bg-[#1a1a1a] rounded animate-pulse" />
                   </div>
                 ))}
               </div>
@@ -2608,7 +2608,7 @@ const StokOpnam = () => {
                     </td>
                     <td className="px-3 py-2 text-center whitespace-nowrap">
                       {item.status_perangkat === 'layak' ? (
-                        <CheckBadgeIcon className="w-5 h-5 text-white mx-auto" />
+                        <CheckBadgeIcon className="w-5 h-5 text-blue-400 mx-auto" />
                       ) : item.status_perangkat === 'rusak' ? (
                         <ExclamationTriangleIcon className="w-5 h-5 text-red-500 mx-auto" />
                       ) : (
@@ -2634,7 +2634,7 @@ const StokOpnam = () => {
                   <div className="flex items-center gap-1.5">
                     <span className="text-gray-500">{formatDate(item.tanggal_entry)}</span>
                     {item.status_perangkat === 'layak' ? (
-                      <CheckBadgeIcon className="w-3.5 h-3.5 text-white" />
+                      <CheckBadgeIcon className="w-3.5 h-3.5 text-blue-400" />
                     ) : item.status_perangkat === 'rusak' ? (
                       <ExclamationTriangleIcon className="w-3.5 h-3.5 text-red-500" />
                     ) : null}
@@ -2657,17 +2657,17 @@ const StokOpnam = () => {
           )}
         </div>
 
-        {/* Pagination Controls - sticky bottom on mobile */}
+        {/* Pagination Controls - fixed bottom bar on mobile, static on desktop */}
         {filteredPerangkat.length > 0 && (
-          <div className="sticky bottom-14 z-10 lg:static bg-black lg:bg-transparent border-t border-black lg:border-none shadow-[0_-20px_50px_rgba(0,0,0,1)] lg:shadow-none py-3 lg:py-0 flex items-center justify-center gap-3 lg:gap-6">
+          <div className="fixed bottom-14 left-0 right-0 z-10 lg:static bg-black/40 backdrop-blur-md lg:bg-transparent lg:backdrop-blur-none border-t border-white/5 lg:border-none py-2 lg:py-0 px-4 lg:px-0 flex items-center justify-center gap-3 lg:gap-6">
             {/* Items per page dropdown */}
             <Select value={String(itemsPerPage)} onValueChange={(val) => handleItemsPerPageChange(val)}>
-              <SelectTrigger className="w-auto h-auto px-2 py-0.5 text-[10px] bg-transparent border border-[#1a1a1a] text-gray-400 rounded-md gap-1 focus:ring-0">
+              <SelectTrigger className="w-auto h-auto px-2 py-0.5 text-xs bg-transparent border border-[#1a1a1a] text-gray-400 rounded-md gap-1 focus:ring-0">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-gray-950 border border-gray-800 text-white min-w-0">
                 {['10', '25', '50', '100', 'all'].map((val) => (
-                  <SelectItem key={val} value={val} className="text-[10px] text-white focus:bg-gray-800 focus:text-white">
+                  <SelectItem key={val} value={val} className="text-xs text-white focus:bg-gray-800 focus:text-white">
                     {val === 'all' ? 'All' : val}
                   </SelectItem>
                 ))}
@@ -2702,7 +2702,7 @@ const StokOpnam = () => {
                         <button
                           key={page}
                           onClick={() => handlePageChange(page)}
-                          className={`px-1.5 py-0.5 text-[10px] transition ${
+                          className={`px-1.5 py-0.5 text-xs transition ${
                             currentPage === page
                               ? 'text-white'
                               : 'text-gray-500 hover:text-white'
@@ -2716,7 +2716,7 @@ const StokOpnam = () => {
                       page === currentPage + 2
                     ) {
                       return (
-                        <span key={page} className="text-gray-600 px-0.5 text-[10px]">
+                        <span key={page} className="text-gray-600 px-0.5 text-xs">
                           ...
                         </span>
                       );
@@ -2749,10 +2749,11 @@ const StokOpnam = () => {
               setShowAddForm(true);
               setAddStep(1);
             }}
-            className="lg:hidden fixed right-5 bottom-20 z-50 flex items-center justify-center w-8 h-8 rounded-full bg-white text-black shadow-lg shadow-black/50 active:scale-95 transition-transform"
+            className="lg:hidden fixed right-5 bottom-[7.5rem] z-50 flex items-center gap-2 pl-4 pr-3 py-2.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 shadow-lg shadow-black/20 active:scale-95 transition-transform"
             aria-label="Tambah Perangkat"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <span className="text-xs font-semibold text-white/80 leading-tight">New Data</span>
+            <svg className="w-4 h-4 text-white/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
           </button>
