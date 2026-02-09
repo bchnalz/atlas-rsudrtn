@@ -223,7 +223,7 @@ const Dashboard = () => {
             src="/atlas-logo.png"
             alt="ATLAS"
             className="mx-auto mb-2"
-            style={{ height: 40 }}
+            style={{ height: 28 }}
           />
           <h1 className="text-sm font-medium text-zinc-400 tracking-widest uppercase">Asset Tracking, Logging & Assignment System</h1>
         </div>

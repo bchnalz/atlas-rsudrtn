@@ -6,7 +6,7 @@ import IPAddressInput from '../components/IPAddressInput';
 import MACAddressInput from '../components/MACAddressInput';
 import StorageInput from '../components/StorageInput';
 import { useToast } from '../contexts/ToastContext';
-import { MagnifyingGlassPlusIcon, MagnifyingGlassIcon, PencilSquareIcon, ArrowsRightLeftIcon, TrashIcon, ClipboardDocumentIcon, FunnelIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassPlusIcon, MagnifyingGlassIcon, PencilSquareIcon, ArrowsRightLeftIcon, TrashIcon, ClipboardDocumentIcon, FunnelIcon, XMarkIcon, ArrowPathIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Hammer } from '../components/animate-ui/icons/hammer';
 import { CheckBadgeIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -1186,8 +1186,8 @@ const StokOpnam = () => {
   return (
     <Layout>
       <div className="space-y-3 text-[11px]">
-        {/* Search Bar and Add Button */}
-        <div className="flex items-center justify-center gap-3">
+        {/* Search Bar and Add Button - sticky on mobile */}
+        <div className="sticky top-0 z-10 lg:static bg-black lg:bg-transparent py-3 lg:py-0 shadow-[0_10px_30px_rgba(0,0,0,1)] lg:shadow-none flex items-center justify-center gap-3">
           <div className="flex items-center gap-1.5 border border-[#1a1a1a] rounded-md px-2 py-0.5">
             <MagnifyingGlassIcon className="w-4 h-4 text-gray-500" />
             <input
@@ -2649,33 +2649,50 @@ const StokOpnam = () => {
             </>
           )}
 
-          {/* Pagination Controls */}
-          {filteredPerangkat.length > 0 && !isShowingAll && totalPages > 1 && (
-            <div className="mt-2 flex flex-col sm:flex-row items-center justify-between lg:justify-center gap-1 lg:gap-8">
-              {/* Info */}
-              <div className="text-[10px] text-gray-500">
-                {currentPage}/{totalPages} — {startIndex + 1}-{Math.min(endIndex, sortedPerangkat.length)} dari {sortedPerangkat.length}
-              </div>
 
-              {/* Page Numbers */}
+          {!loading && filteredPerangkat.length === 0 && (
+            <div className="text-center py-12 text-gray-400">
+              <p className="text-lg">Tidak ada data ditemukan</p>
+            </div>
+          )}
+        </div>
+
+        {/* Pagination Controls - sticky bottom on mobile */}
+        {filteredPerangkat.length > 0 && (
+          <div className="sticky bottom-14 z-10 lg:static bg-black lg:bg-transparent border-t border-black lg:border-none shadow-[0_-20px_50px_rgba(0,0,0,1)] lg:shadow-none py-3 lg:py-0 flex items-center justify-center gap-3 lg:gap-6">
+            {/* Items per page dropdown */}
+            <Select value={String(itemsPerPage)} onValueChange={(val) => handleItemsPerPageChange(val)}>
+              <SelectTrigger className="w-auto h-auto px-2 py-0.5 text-[10px] bg-transparent border border-[#1a1a1a] text-gray-400 rounded-md gap-1 focus:ring-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-950 border border-gray-800 text-white min-w-0">
+                {['10', '25', '50', '100', 'all'].map((val) => (
+                  <SelectItem key={val} value={val} className="text-[10px] text-white focus:bg-gray-800 focus:text-white">
+                    {val === 'all' ? 'All' : val}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Page Numbers - only when paginated */}
+            {!isShowingAll && totalPages > 1 && (
               <div className="flex items-center space-x-0.5">
                 {/* Previous Button */}
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`px-1.5 py-0.5 text-[10px] transition ${
+                  className={`px-1 py-0.5 transition ${
                     currentPage === 1
                       ? 'text-gray-600 cursor-not-allowed'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
-                  ←
+                  <ChevronLeftIcon className="w-4 h-4" />
                 </button>
 
                 {/* Page Numbers */}
                 <div className="flex items-center space-x-0.5">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                    // Show first, last, current, and adjacent pages
                     if (
                       page === 1 ||
                       page === totalPages ||
@@ -2712,24 +2729,18 @@ const StokOpnam = () => {
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className={`px-1.5 py-0.5 text-[10px] transition ${
-                    currentPage === totalPages
+                className={`px-1 py-0.5 transition ${
+                  currentPage === totalPages
                       ? 'text-gray-600 cursor-not-allowed'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
-                  →
+                  <ChevronRightIcon className="w-4 h-4" />
                 </button>
               </div>
-            </div>
-          )}
-
-          {!loading && filteredPerangkat.length === 0 && (
-            <div className="text-center py-12 text-gray-400">
-              <p className="text-lg">Tidak ada data ditemukan</p>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* Mobile FAB - Floating Add Button above bottom bar */}
         {canEdit && (

@@ -10,7 +10,7 @@ import {
 } from './ui/drawer';
 import { Cog } from '../components/animate-ui/icons/cog';
 
-const Layout = ({ children }) => {
+const Layout = ({ children, hideTopBar = false }) => {
   const { profile, signOut, accessiblePages, pagesLoaded, refreshAccessiblePages } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -263,30 +263,32 @@ const Layout = ({ children }) => {
   return (
     <div className="min-h-screen bg-black text-gray-100">
       {/* Top Bar - Desktop only */}
-      <header className={`fixed top-0 left-0 right-0 h-12 bg-black z-40 hidden lg:flex items-center px-3 transition-all duration-300 ${
-        isSidebarCollapsed ? 'lg:left-0' : 'lg:left-64'
-      }`}>
-        {/* Open sidebar button - Desktop only when collapsed */}
-        {isSidebarCollapsed && (
-          <button
-            onClick={() => setIsSidebarCollapsed(false)}
-            className="hidden lg:flex p-1.5 rounded hover:bg-gray-800 transition mr-3"
-            title="Open sidebar"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        )}
+      {!hideTopBar && (
+        <header className={`fixed top-0 left-0 right-0 h-12 bg-black z-40 hidden lg:flex items-center px-3 transition-all duration-300 ${
+          isSidebarCollapsed ? 'lg:left-0' : 'lg:left-64'
+        }`}>
+          {/* Open sidebar button - Desktop only when collapsed */}
+          {isSidebarCollapsed && (
+            <button
+              onClick={() => setIsSidebarCollapsed(false)}
+              className="hidden lg:flex p-1.5 rounded hover:bg-gray-800 transition mr-3"
+              title="Open sidebar"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          )}
 
-        {/* User Info + Page Title */}
-        <div className="flex-1 flex items-center justify-center text-sm">
-          <span className="text-gray-400">{profile?.full_name}</span>
-          <span className="mx-2 text-gray-500">/</span>
-          <span className="text-gray-200 font-medium">{currentPageTitle}</span>
-        </div>
+          {/* User Info + Page Title */}
+          <div className="flex-1 flex items-center justify-center text-sm">
+            <span className="text-gray-400">{profile?.full_name}</span>
+            <span className="mx-2 text-gray-500">/</span>
+            <span className="text-gray-200 font-medium">{currentPageTitle}</span>
+          </div>
 
-      </header>
+        </header>
+      )}
 
       {/* Sidebar - Desktop only */}
       <aside
@@ -662,7 +664,7 @@ const Layout = ({ children }) => {
       )}
 
       {/* Main Content */}
-      <main className={`pt-0 lg:pt-12 pb-16 lg:pb-0 min-h-screen transition-all duration-300 ${
+      <main className={`pt-0 ${hideTopBar ? 'lg:pt-0' : 'lg:pt-12'} pb-16 lg:pb-0 min-h-screen transition-all duration-300 ${
         isSidebarCollapsed ? 'lg:pl-0' : 'lg:pl-64'
       }`}>
         <div className="p-6">

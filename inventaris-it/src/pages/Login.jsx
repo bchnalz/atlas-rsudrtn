@@ -255,7 +255,7 @@ const Login = () => {
                     src="/atlas-logo.png"
                     alt="ATLAS"
                     className="mx-auto mb-6"
-                    style={{ height: 56 }}
+                    style={{ height: 40 }}
                   />
                   <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
                     Asset Tracking, Logging & Assignment System

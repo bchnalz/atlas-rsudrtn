@@ -3,8 +3,9 @@ import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { MagnifyingGlassPlusIcon } from '@heroicons/react/24/outline';
 import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Badge } from '../components/ui/badge';
+import { TagIcon, UserIcon, ClockIcon, CheckCircleIcon, CalendarIcon, PlayIcon, PauseIcon, HandThumbUpIcon } from '@heroicons/react/16/solid';
 
 const DaftarTugas = () => {
   const { user } = useAuth();
@@ -437,50 +438,52 @@ const DaftarTugas = () => {
   };
 
   const getStatusBadge = (status) => {
-    const badges = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      acknowledged: 'bg-blue-100 text-blue-800',
-      in_progress: 'bg-purple-100 text-purple-800',
-      paused: 'bg-orange-100 text-orange-800',
-      completed: 'bg-green-100 text-green-800',
-      cancelled: 'bg-gray-100 text-gray-800',
+    const styles = {
+      pending: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-400',
+      acknowledged: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
+      in_progress: 'border-purple-500/30 bg-purple-500/10 text-purple-400',
+      paused: 'border-orange-500/30 bg-orange-500/10 text-orange-400',
+      completed: 'border-green-500/30 bg-green-500/10 text-green-400',
+      cancelled: 'border-zinc-500/30 bg-zinc-500/10 text-zinc-400',
+      scheduled: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-400',
     };
-    
+
     const labels = {
-      pending: '🔔 Baru',
-      acknowledged: '✅ Dikonfirmasi',
-      in_progress: '▶️ Dikerjakan',
-      paused: '⏸️ Tertunda',
-      completed: '✔️ Selesai',
-      cancelled: '❌ Dibatalkan',
+      pending: 'Baru',
+      acknowledged: 'Dikonfirmasi',
+      in_progress: 'Dikerjakan',
+      paused: 'Tertunda',
+      completed: 'Selesai',
+      cancelled: 'Dibatalkan',
+      scheduled: 'Terjadwal',
     };
 
     return (
-      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${badges[status]}`}>
-        {labels[status]}
-      </span>
+      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${styles[status] || ''}`}>
+        {labels[status] || status}
+      </Badge>
     );
   };
 
   const getPriorityBadge = (priority) => {
-    const badges = {
-      low: 'bg-gray-100 text-gray-600',
-      normal: 'bg-blue-100 text-blue-600',
-      high: 'bg-orange-100 text-orange-600',
-      urgent: 'bg-red-100 text-red-600',
+    const styles = {
+      low: 'border-zinc-500/30 bg-zinc-500/10 text-zinc-400',
+      normal: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
+      high: 'border-orange-500/30 bg-orange-500/10 text-orange-400',
+      urgent: 'border-red-500/30 bg-red-500/10 text-red-400',
     };
-    
+
     const labels = {
       low: 'Rendah',
       normal: 'Normal',
       high: 'Tinggi',
-      urgent: '🚨 Mendesak',
+      urgent: 'Mendesak',
     };
 
     return (
-      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${badges[priority]}`}>
-        {labels[priority]}
-      </span>
+      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${styles[priority] || ''}`}>
+        {labels[priority] || priority}
+      </Badge>
     );
   };
 
@@ -519,7 +522,7 @@ const DaftarTugas = () => {
 
   if (loading) {
     return (
-      <Layout>
+      <Layout hideTopBar>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
         </div>
@@ -528,7 +531,7 @@ const DaftarTugas = () => {
   }
 
   return (
-    <Layout>
+    <Layout hideTopBar>
       <div className="space-y-3 text-[11px]" style={{ fontFamily: "'Open Sans', sans-serif" }}>
         {/* Detail Modal */}
         {showDetailModal && selectedTask && (
@@ -541,7 +544,7 @@ const DaftarTugas = () => {
             }}
           >
             <div
-              className={`bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full max-h-[90vh] md:w-[504px] my-4 md:my-8 font-['Open_Sans'] flex flex-col overflow-hidden ${
+              className={`bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full h-[60vh] md:w-[504px] md:h-[350px] my-4 md:my-8 font-['Open_Sans'] flex flex-col overflow-hidden ${
                 isDetailClosing ? 'modal-content-exit' : 'modal-content-enter'
               }`}
             >
@@ -671,8 +674,8 @@ const DaftarTugas = () => {
                     <p className="text-xs font-semibold text-white mb-2">Riwayat Aktivitas</p>
                     <div className="space-y-1.5">
                       {selectedTask.time_logs.map((log) => (
-                        <div key={log.id} className="flex items-start gap-2.5 bg-gray-800 border border-gray-700 p-2.5 rounded-lg">
-                          <div className="text-base">
+                        <div key={log.id} className="flex items-start gap-2.5 py-1.5">
+                          <div className="text-xs text-gray-500 w-4 text-center">
                             {log.action === 'acknowledge' && '✅'}
                             {log.action === 'start' && '▶️'}
                             {log.action === 'pause' && '⏸️'}
@@ -827,85 +830,78 @@ const DaftarTugas = () => {
               return false;
             })
             .map((task) => (
-              <div key={task.id} className="bg-gray-950 border border-gray-800 rounded-lg p-3 hover:border-gray-700 transition">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono font-bold text-white">
-                        {task.task_number}
-                      </span>
+              <div
+                key={task.id}
+                className="bg-black border border-[#1a1a1a] rounded-lg px-2.5 pt-2.5 pb-2 hover:border-gray-800 transition font-['Open_Sans'] cursor-pointer"
+                onClick={(e) => {
+                  if (e.target.closest('button')) return;
+                  handleViewDetail(task);
+                }}
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white">{task.task_number}</span>
                       {getPriorityBadge(task.priority)}
                       {getStatusBadge(task.user_status)}
                     </div>
-                    
-                    <p className="text-xs font-bold text-white mb-1 truncate">{task.title}</p>
-                    
-                    <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-                      <span>📋 {task.skp_category?.name}</span>
+
+                    <p className="text-xs font-bold text-white truncate">{task.title}</p>
+
+                    <div className="flex flex-wrap gap-2.5 text-xs text-gray-500">
+                      <span className="inline-flex items-center gap-1"><TagIcon className="w-3 h-3" />{task.skp_category?.name}</span>
                       {task.assigned_by_user && (
-                        <span>👤 {task.assigned_by_user?.full_name || task.assigned_by_user?.name}</span>
+                        <span className="inline-flex items-center gap-1"><UserIcon className="w-3 h-3" />{task.assigned_by_user?.full_name || task.assigned_by_user?.name}</span>
                       )}
-                      <span>🕐 {formatDate(task.created_at)}</span>
+                      <span className="inline-flex items-center gap-1"><ClockIcon className="w-3 h-3" />{formatDate(task.created_at)}</span>
                       {task.completed_at && (
-                        <span>✅ {formatDate(task.completed_at)}</span>
+                        <span className="inline-flex items-center gap-1"><CheckCircleIcon className="w-3 h-3" />{formatDate(task.completed_at)}</span>
                       )}
                       {task.scheduled_for && activeTab === 'scheduled' && (
-                        <span>⏰ {formatDate(task.scheduled_for)}</span>
+                        <span className="inline-flex items-center gap-1"><CalendarIcon className="w-3 h-3" />{formatDate(task.scheduled_for)}</span>
                       )}
                     </div>
 
                     {(task.user_status === 'in_progress' || task.user_status === 'paused') && (
-                      <div className="mt-1.5">
-                        <span className="text-xs font-bold text-purple-400">
-                          ⏱️ {formatDuration(elapsedTime[task.id] || task.user_work_duration)}
-                        </span>
-                      </div>
+                      <span className="text-xs font-bold text-purple-400 inline-flex items-center gap-1">
+                        <ClockIcon className="w-3 h-3" />{formatDuration(elapsedTime[task.id] || task.user_work_duration)}
+                      </span>
                     )}
 
                     {task.user_status === 'completed' && (
-                      <div className="mt-1.5">
-                        <span className="text-xs font-bold text-green-400">
-                          ✅ Durasi: {(() => {
-                            if (task.total_duration_minutes && task.total_duration_minutes > 0) {
-                              return formatDuration(task.total_duration_minutes);
-                            } else if (task.assigned_at && task.completed_at) {
-                              const assignedTime = new Date(task.assigned_at);
-                              const completedTime = new Date(task.completed_at);
-                              const diffMs = completedTime.getTime() - assignedTime.getTime();
-                              const minutes = Math.floor(diffMs / 60000);
-                              return formatDuration(minutes > 0 ? minutes : 0);
-                            }
-                            return formatDuration(task.user_work_duration || 0);
-                          })()}
-                        </span>
-                      </div>
+                      <span className="text-xs font-bold text-green-400 inline-flex items-center gap-1">
+                        <CheckCircleIcon className="w-3 h-3" />Durasi: {(() => {
+                          if (task.total_duration_minutes && task.total_duration_minutes > 0) {
+                            return formatDuration(task.total_duration_minutes);
+                          } else if (task.assigned_at && task.completed_at) {
+                            const assignedTime = new Date(task.assigned_at);
+                            const completedTime = new Date(task.completed_at);
+                            const diffMs = completedTime.getTime() - assignedTime.getTime();
+                            const minutes = Math.floor(diffMs / 60000);
+                            return formatDuration(minutes > 0 ? minutes : 0);
+                          }
+                          return formatDuration(task.user_work_duration || 0);
+                        })()}
+                      </span>
                     )}
                   </div>
 
-                  <div className="flex flex-wrap gap-1.5">
-                    <button
-                      onClick={() => handleViewDetail(task)}
-                      className="px-3 py-1.5 text-xs bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition flex items-center gap-1.5"
-                    >
-                      <MagnifyingGlassPlusIcon className="w-3.5 h-3.5" />
-                      Detail
-                    </button>
-
+                  <div className="flex flex-wrap gap-2.5">
                     {task.user_status === 'pending' && task.status !== 'scheduled' && (
                       <button
                         onClick={() => handleAcknowledge(task)}
-                        className="px-3 py-1.5 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition"
+                        className="px-2.5 py-1.5 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition inline-flex items-center gap-1"
                       >
-                        ✅ Konfirmasi
+                        <HandThumbUpIcon className="w-3 h-3" />Konfirmasi
                       </button>
                     )}
 
                     {(task.user_status === 'acknowledged' || task.user_status === 'paused') && task.status !== 'scheduled' && (
                       <button
                         onClick={() => handleStart(task)}
-                        className="px-3 py-1.5 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition"
+                        className="px-2.5 py-1.5 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition inline-flex items-center gap-1"
                       >
-                        ▶️ {task.user_status === 'paused' ? 'Lanjut' : 'Mulai'}
+                        <PlayIcon className="w-3 h-3" />{task.user_status === 'paused' ? 'Lanjut' : 'Mulai'}
                       </button>
                     )}
 
@@ -913,15 +909,15 @@ const DaftarTugas = () => {
                       <>
                         <button
                           onClick={() => handlePause(task)}
-                          className="px-3 py-1.5 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition"
+                          className="px-2.5 py-1.5 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition inline-flex items-center gap-1"
                         >
-                          ⏸️ Pause
+                          <PauseIcon className="w-3 h-3" />Pause
                         </button>
                         <button
                           onClick={() => handleCompleteClick(task)}
-                          className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-500 text-white rounded-lg transition"
+                          className="px-2.5 py-1.5 text-xs bg-green-600 hover:bg-green-500 text-white rounded-lg transition inline-flex items-center gap-1"
                         >
-                          ✔️ Selesai
+                          <CheckCircleIcon className="w-3 h-3" />Selesai
                         </button>
                       </>
                     )}
@@ -929,9 +925,9 @@ const DaftarTugas = () => {
                     {task.user_status === 'paused' && task.status !== 'scheduled' && (
                       <button
                         onClick={() => handleCompleteClick(task)}
-                        className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-500 text-white rounded-lg transition"
+                        className="px-2.5 py-1.5 text-xs bg-green-600 hover:bg-green-500 text-white rounded-lg transition inline-flex items-center gap-1"
                       >
-                        ✔️ Selesai
+                        <CheckCircleIcon className="w-3 h-3" />Selesai
                       </button>
                     )}
                   </div>
