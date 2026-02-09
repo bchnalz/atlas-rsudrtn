@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import Layout from '../components/Layout';
 import { AnimatedChartLine } from '../components/ui/animated-icons';
 import { useCountUp } from '../hooks/useCountUp';
@@ -10,9 +11,12 @@ import {
   CarouselItem,
 } from '../components/ui/carousel';
 import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { ClipboardDocumentIcon } from '@heroicons/react/24/outline';
+import { CheckBadgeIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
+  const toast = useToast();
   const [skpProgress, setSkpProgress] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentYear] = useState(new Date().getFullYear());
@@ -26,6 +30,26 @@ const Dashboard = () => {
   const [carouselApi, setCarouselApi] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const tabs = ['skp', 'perangkat'];
+
+  // Barcode scanner state
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanLoading, setScanLoading] = useState(false);
+  const scannerRef = useRef(null);
+  const html5QrCodeRef = useRef(null);
+
+  // Device detail dialog state
+  const [viewingDetail, setViewingDetail] = useState(null);
+  const [isDetailClosing, setIsDetailClosing] = useState(false);
+  const [detailTab, setDetailTab] = useState('detail');
+  const [historyData, setHistoryData] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [mutasiHistory, setMutasiHistory] = useState([]);
+  const [loadingMutasiHistory, setLoadingMutasiHistory] = useState(false);
+
+  // Swipe support for detail tabs
+  const detailTabs = ['detail', 'history', 'mutasi'];
+  const touchStartRef = useRef({ x: 0, y: 0 });
+  const swipeContentRef = useRef(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -65,6 +89,216 @@ const Dashboard = () => {
       carouselApi.scrollTo(index);
     }
   }, [carouselApi, tabs]);
+
+  // --- Barcode Scanner ---
+  const startScanner = async () => {
+    setShowScanner(true);
+    // Wait for DOM to render the scanner container
+    await new Promise((r) => setTimeout(r, 100));
+
+    const { Html5Qrcode } = await import('html5-qrcode');
+    const scanner = new Html5Qrcode('dashboard-barcode-reader');
+    html5QrCodeRef.current = scanner;
+
+    try {
+      await scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+          stopScanner();
+          handleBarcodeScanned(decodedText);
+        },
+        () => {} // ignore scan failures (no match yet)
+      );
+    } catch (err) {
+      console.error('Camera error:', err);
+      toast.error('Gagal mengakses kamera');
+      setShowScanner(false);
+    }
+  };
+
+  const stopScanner = async () => {
+    try {
+      if (html5QrCodeRef.current?.isScanning) {
+        await html5QrCodeRef.current.stop();
+      }
+      html5QrCodeRef.current?.clear();
+    } catch {
+      // ignore cleanup errors
+    }
+    html5QrCodeRef.current = null;
+    setShowScanner(false);
+  };
+
+  const handleBarcodeScanned = async (idPerangkat) => {
+    const trimmed = idPerangkat.trim();
+    if (!trimmed) return;
+
+    setScanLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('perangkat')
+        .select(`
+          id,
+          id_perangkat,
+          nama_perangkat,
+          jenis_perangkat_kode,
+          jenis_barang_id,
+          lokasi_kode,
+          serial_number,
+          merk,
+          id_remoteaccess,
+          spesifikasi_processor,
+          kapasitas_ram,
+          mac_ethernet,
+          mac_wireless,
+          ip_ethernet,
+          ip_wireless,
+          serial_number_monitor,
+          tanggal_entry,
+          status_perangkat,
+          petugas_id,
+          jenis_perangkat:ms_jenis_perangkat!perangkat_jenis_perangkat_kode_fkey(kode, nama),
+          jenis_barang:ms_jenis_barang!perangkat_jenis_barang_id_fkey(id, nama),
+          lokasi:ms_lokasi!perangkat_lokasi_kode_fkey(kode, nama),
+          petugas:profiles!perangkat_petugas_id_fkey(id, full_name),
+          perangkat_storage(id, jenis_storage, kapasitas)
+        `)
+        .eq('id_perangkat', trimmed)
+        .single();
+
+      if (error || !data) {
+        toast.error('Perangkat tidak ditemukan: ' + trimmed);
+        return;
+      }
+
+      handleViewDetail(data);
+    } catch (err) {
+      console.error('Error searching device:', err);
+      toast.error('Gagal mencari perangkat');
+    } finally {
+      setScanLoading(false);
+    }
+  };
+
+  // --- Device Detail ---
+  const handleViewDetail = async (item) => {
+    setIsDetailClosing(false);
+    setViewingDetail(item);
+    setDetailTab('detail');
+    setHistoryData([]);
+    setMutasiHistory([]);
+    await fetchRepairHistory(item.id);
+    await fetchMutasiHistory(item.id);
+  };
+
+  const handleCloseDetail = () => {
+    setIsDetailClosing(true);
+    setTimeout(() => {
+      setViewingDetail(null);
+      setHistoryData([]);
+      setMutasiHistory([]);
+      setDetailTab('detail');
+      setIsDetailClosing(false);
+    }, 150);
+  };
+
+  const fetchRepairHistory = async (perangkatId) => {
+    try {
+      setLoadingHistory(true);
+      const { data, error } = await supabase
+        .from('device_repair_history')
+        .select('*')
+        .eq('perangkat_id', perangkatId)
+        .order('task_created_at', { ascending: false });
+      if (error) throw error;
+      setHistoryData(data || []);
+    } catch (error) {
+      console.error('Error fetching repair history:', error.message);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const fetchMutasiHistory = async (perangkatId) => {
+    try {
+      setLoadingMutasiHistory(true);
+      const { data, error } = await supabase
+        .rpc('get_mutasi_history', { p_perangkat_id: perangkatId });
+      if (error) throw error;
+      setMutasiHistory(data || []);
+    } catch (error) {
+      console.error('Error fetching mutasi history:', error);
+      setMutasiHistory([]);
+    } finally {
+      setLoadingMutasiHistory(false);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  };
+
+  const copyToClipboard = async (text, label) => {
+    const value = String(text ?? '').trim();
+    if (!value) { toast.error(`${label} kosong`); return; }
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(`${label} copied!`);
+    } catch {
+      toast.error(`Gagal copy ${label}`);
+    }
+  };
+
+  const getTaskStatusBadge = (status) => {
+    const badges = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      acknowledged: 'bg-blue-100 text-blue-800',
+      in_progress: 'bg-purple-100 text-purple-800',
+      paused: 'bg-orange-100 text-orange-800',
+      completed: 'bg-green-100 text-green-800',
+      cancelled: 'bg-gray-100 text-gray-800',
+      on_hold: 'bg-orange-100 text-orange-800',
+    };
+    const labels = {
+      pending: 'Menunggu', acknowledged: 'Dikonfirmasi',
+      in_progress: 'Dikerjakan', paused: 'Tertunda',
+      completed: 'Selesai', cancelled: 'Dibatalkan', on_hold: 'On Hold',
+    };
+    return (
+      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${badges[status] || 'bg-gray-100 text-gray-800'}`}>
+        {labels[status] || status}
+      </span>
+    );
+  };
+
+  const handleDetailTabSwipe = useCallback((direction) => {
+    const idx = detailTabs.indexOf(detailTab);
+    if (direction === 'left' && idx < detailTabs.length - 1) setDetailTab(detailTabs[idx + 1]);
+    else if (direction === 'right' && idx > 0) setDetailTab(detailTabs[idx - 1]);
+  }, [detailTab]);
+
+  const handleDetailTouchStart = useCallback((e) => {
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, []);
+
+  const handleDetailTouchEnd = useCallback((e) => {
+    const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      handleDetailTabSwipe(dx < 0 ? 'left' : 'right');
+    }
+  }, [handleDetailTabSwipe]);
+
+  // Cleanup scanner on unmount
+  useEffect(() => {
+    return () => { stopScanner(); };
+  }, []);
 
   const fetchDeviceStats = async () => {
     try {
@@ -342,9 +576,386 @@ const Dashboard = () => {
                 </TabsList>
               </Tabs>
             </div>
+
+            {/* Scan Barcode Button - mobile only */}
+            <div className="flex justify-center mt-3 md:hidden">
+              <button
+                onClick={startScanner}
+                disabled={scanLoading}
+                className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-zinc-100 bg-zinc-900 border border-zinc-700 rounded-sm hover:bg-zinc-800 active:bg-zinc-700 transition disabled:opacity-50"
+              >
+                {scanLoading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-zinc-500 border-t-zinc-100" />
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                    <path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" />
+                    <path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+                    <line x1="7" y1="12" x2="17" y2="12" />
+                    <line x1="7" y1="8" x2="9" y2="8" /><line x1="7" y1="16" x2="9" y2="16" />
+                    <line x1="11" y1="8" x2="17" y2="8" /><line x1="11" y1="16" x2="17" y2="16" />
+                  </svg>
+                )}
+                Scan Barcode
+              </button>
+            </div>
           </Carousel>
         </div>
       </div>
+
+      {/* Barcode Scanner Modal */}
+      {showScanner && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black bg-opacity-80 modal-backdrop-enter"
+          onClick={(e) => { if (e.target === e.currentTarget) stopScanner(); }}
+        >
+          <div className="w-full max-w-sm bg-black rounded-sm border border-gray-800 overflow-hidden modal-content-enter">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+              <h3 className="text-sm font-medium text-zinc-100">Scan Barcode Perangkat</h3>
+              <button
+                onClick={stopScanner}
+                className="text-zinc-500 hover:text-zinc-300 transition text-lg leading-none"
+              >
+                &times;
+              </button>
+            </div>
+            <div id="dashboard-barcode-reader" ref={scannerRef} className="w-full" />
+            <p className="text-center text-[10px] text-zinc-500 py-2">Arahkan kamera ke barcode ID Perangkat</p>
+          </div>
+        </div>
+      )}
+
+      {/* Scan Loading Overlay */}
+      {scanLoading && !showScanner && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-60">
+          <div className="flex flex-col items-center gap-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-zinc-500 border-t-zinc-100" />
+            <span className="text-xs text-zinc-400">Mencari perangkat...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Device Detail Dialog */}
+      {viewingDetail && (
+        <div
+          className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999] overflow-y-auto ${
+            isDetailClosing ? 'modal-backdrop-exit' : 'modal-backdrop-enter'
+          }`}
+          onClick={(e) => { if (e.target === e.currentTarget) handleCloseDetail(); }}
+        >
+          <div
+            className={`bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full h-[60vh] md:w-[504px] md:h-[350px] my-4 md:my-8 font-['Open_Sans'] flex flex-col overflow-hidden ${
+              isDetailClosing ? 'modal-content-exit' : 'modal-content-enter'
+            }`}
+          >
+            {/* Fixed Header */}
+            <div className="flex-shrink-0 flex justify-between items-start px-4 pt-3 pb-1 bg-black">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-white text-sm truncate">{viewingDetail.nama_perangkat}</span>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(viewingDetail.nama_perangkat, 'Nama Perangkat')}
+                    className="text-gray-400 hover:text-white transition flex-shrink-0"
+                    title="Copy Nama Perangkat"
+                  >
+                    <ClipboardDocumentIcon className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-white font-bold text-xs">{viewingDetail.id_perangkat}</span>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(viewingDetail.id_perangkat, 'ID Perangkat')}
+                    className="text-gray-400 hover:text-white transition flex-shrink-0"
+                    title="Copy ID Perangkat"
+                  >
+                    <ClipboardDocumentIcon className="w-3 h-3" />
+                  </button>
+                  <span className="text-gray-600">&bull;</span>
+                  {viewingDetail.status_perangkat === 'layak' ? (
+                    <CheckBadgeIcon className="w-4 h-4 text-blue-400" />
+                  ) : (
+                    <ExclamationTriangleIcon className="w-4 h-4 text-red-500" />
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseDetail}
+                className="flex-shrink-0 text-gray-400 hover:text-white transition text-2xl font-bold leading-none ml-2"
+                title="Tutup"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Fixed Tabs */}
+            <div className="flex-shrink-0 flex justify-center py-1">
+              <Tabs value={detailTab} onValueChange={setDetailTab}>
+                <TabsList className="bg-transparent border border-zinc-800 rounded-sm h-auto p-0.5 gap-1">
+                  <TabsTrigger value="detail" className="text-xs py-1.5 px-3 data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100 data-[state=active]:shadow-none text-zinc-500 rounded-sm">
+                    Detail
+                  </TabsTrigger>
+                  <TabsTrigger value="history" className="text-xs py-1.5 px-3 data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100 data-[state=active]:shadow-none text-zinc-500 rounded-sm">
+                    History Perbaikan
+                  </TabsTrigger>
+                  <TabsTrigger value="mutasi" className="text-xs py-1.5 px-3 data-[state=active]:bg-zinc-800 data-[state=active]:text-zinc-100 data-[state=active]:shadow-none text-zinc-500 rounded-sm">
+                    History Mutasi
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+
+            {/* Scrollable Content Area - swipeable */}
+            <div
+              ref={swipeContentRef}
+              className="flex-1 overflow-y-auto modern-scrollbar p-4"
+              onTouchStart={handleDetailTouchStart}
+              onTouchEnd={handleDetailTouchEnd}
+            >
+              {/* DETAIL TAB */}
+              {detailTab === 'detail' && (
+                <div key="tab-detail" className="animate-tab-slide grid grid-cols-2 gap-x-6 gap-y-2.5 text-gray-100 text-xs">
+                  {viewingDetail.serial_number && viewingDetail.serial_number !== '-' && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Serial Number</p>
+                      <p className="text-xs">{viewingDetail.serial_number}</p>
+                    </div>
+                  )}
+                  {viewingDetail.lokasi && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Lokasi</p>
+                      <p className="text-xs">{viewingDetail.lokasi.kode} - {viewingDetail.lokasi.nama}</p>
+                    </div>
+                  )}
+                  {viewingDetail.id_remoteaccess && viewingDetail.id_remoteaccess !== '-' && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">ID Remote Access</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs">{viewingDetail.id_remoteaccess}</p>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(viewingDetail.id_remoteaccess, 'ID Remote Access')}
+                          className="text-gray-500 hover:text-white transition flex-shrink-0"
+                          title="Copy ID Remote Access"
+                        >
+                          <ClipboardDocumentIcon className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {viewingDetail.jenis_perangkat && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Jenis Perangkat</p>
+                      <p className="text-xs">{viewingDetail.jenis_perangkat.kode} - {viewingDetail.jenis_perangkat.nama}</p>
+                    </div>
+                  )}
+                  {viewingDetail.spesifikasi_processor && viewingDetail.spesifikasi_processor !== '-' && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Processor</p>
+                      <p className="text-xs">{viewingDetail.spesifikasi_processor}</p>
+                    </div>
+                  )}
+                  {viewingDetail.jenis_barang && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Jenis Barang</p>
+                      <p className="text-xs">{viewingDetail.jenis_barang.nama}</p>
+                    </div>
+                  )}
+                  {viewingDetail.kapasitas_ram && viewingDetail.kapasitas_ram !== '-' && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">RAM</p>
+                      <p className="text-xs">{viewingDetail.kapasitas_ram}</p>
+                    </div>
+                  )}
+                  {viewingDetail.merk && viewingDetail.merk !== '-' && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Merk</p>
+                      <p className="text-xs">{viewingDetail.merk}</p>
+                    </div>
+                  )}
+                  {viewingDetail.perangkat_storage && viewingDetail.perangkat_storage.length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Storage</p>
+                      <div className="space-y-0.5">
+                        {viewingDetail.perangkat_storage.map((storage, index) => (
+                          <div key={storage.id || index} className="flex items-center gap-1.5 text-xs">
+                            <span className="bg-blue-900 text-blue-200 px-1 py-0.5 rounded text-[10px] font-medium">
+                              {storage.jenis_storage}
+                            </span>
+                            <span>{storage.kapasitas} GB</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {viewingDetail.petugas && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Petugas Entry</p>
+                      <p className="text-xs">{viewingDetail.petugas.full_name}</p>
+                    </div>
+                  )}
+                  {viewingDetail.mac_ethernet && viewingDetail.mac_ethernet !== '-' && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">MAC Ethernet</p>
+                      <p className="text-xs">{viewingDetail.mac_ethernet}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs text-gray-500 mb-0.5">Tanggal Entry</p>
+                    <p className="text-xs">{formatDate(viewingDetail.tanggal_entry)}</p>
+                  </div>
+                  {viewingDetail.mac_wireless && viewingDetail.mac_wireless !== '-' && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">MAC Wireless</p>
+                      <p className="text-xs">{viewingDetail.mac_wireless}</p>
+                    </div>
+                  )}
+                  {viewingDetail.serial_number_monitor && viewingDetail.serial_number_monitor !== '-' && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">SN Monitor</p>
+                      <p className="text-xs">{viewingDetail.serial_number_monitor}</p>
+                    </div>
+                  )}
+                  {viewingDetail.ip_ethernet && viewingDetail.ip_ethernet !== '-' && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">IP Ethernet</p>
+                      <p className="text-xs">{viewingDetail.ip_ethernet}</p>
+                    </div>
+                  )}
+                  {viewingDetail.ip_wireless && viewingDetail.ip_wireless !== '-' && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">IP Wireless</p>
+                      <p className="text-xs">{viewingDetail.ip_wireless}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* HISTORY TAB */}
+              {detailTab === 'history' && (
+                <div key="tab-history" className="animate-tab-slide">
+                  {loadingHistory ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-500" />
+                    </div>
+                  ) : historyData.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-xs text-gray-400">Belum ada riwayat perbaikan</p>
+                      <p className="text-xs text-gray-500 mt-1">Perangkat ini belum pernah diperbaiki</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="bg-cyan-900/20 border border-cyan-700 rounded-lg p-2.5 mb-3">
+                        <p className="text-xs text-cyan-300">
+                          Total: <span className="text-base font-bold text-cyan-400">{historyData.length}</span> kali diperbaiki
+                        </p>
+                      </div>
+                      {historyData.map((history, index) => (
+                        <div key={history.task_id} className="bg-gray-800 border border-gray-700 rounded-lg p-2.5 hover:border-cyan-600 transition">
+                          <div className="flex items-start justify-between mb-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-cyan-500">#{index + 1}</span>
+                              <p className="text-xs font-mono font-bold text-yellow-300">{history.task_number}</p>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              {getTaskStatusBadge(history.task_status)}
+                              <p className="text-xs text-gray-400">{formatDate(history.task_created_at).split(' ')[0]}</p>
+                            </div>
+                          </div>
+                          <h3 className="text-xs font-semibold text-white mb-1">{history.task_title}</h3>
+                          {history.task_description && (
+                            <p className="text-xs text-gray-300 mb-2 line-clamp-2">{history.task_description}</p>
+                          )}
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                              <p className="text-gray-500">Petugas:</p>
+                              <p className="text-white font-medium">{history.assigned_users || '-'}</p>
+                              {history.user_count > 1 && (
+                                <p className="text-xs text-cyan-400">({history.user_count} orang)</p>
+                              )}
+                            </div>
+                            {history.completed_at && (
+                              <div>
+                                <p className="text-gray-500">Selesai:</p>
+                                <p className="text-green-400 text-xs">{formatDate(history.completed_at)}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* HISTORY MUTASI TAB */}
+              {detailTab === 'mutasi' && (
+                <div key="tab-mutasi" className="animate-tab-slide">
+                  {loadingMutasiHistory ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-500" />
+                    </div>
+                  ) : mutasiHistory.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-xs text-gray-400">Belum ada riwayat mutasi</p>
+                      <p className="text-xs text-gray-500 mt-1">Perangkat ini belum pernah dimutasi</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {mutasiHistory.map((mutasi, index) => (
+                        <div
+                          key={mutasi.id}
+                          className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-green-500 transition"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-base">🔄</span>
+                              <div>
+                                <p className="text-xs text-gray-500">
+                                  {new Date(mutasi.tanggal_mutasi).toLocaleDateString('id-ID', {
+                                    day: 'numeric', month: 'long', year: 'numeric',
+                                    hour: '2-digit', minute: '2-digit'
+                                  })}
+                                </p>
+                                <p className="text-xs text-gray-400 mt-0.5">Oleh: {mutasi.created_by_name}</p>
+                              </div>
+                            </div>
+                            <span className="text-xs bg-green-900 text-green-300 px-2 py-1 rounded">
+                              #{mutasiHistory.length - index}
+                            </span>
+                          </div>
+                          <div className="mt-3 space-y-2">
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="text-gray-500">Dari:</span>
+                              <span className="text-red-400 font-medium">{mutasi.lokasi_lama_nama} ({mutasi.lokasi_lama_kode})</span>
+                              <span className="text-gray-600">&bull;</span>
+                              <span className="text-gray-400">{mutasi.nama_perangkat_lama}</span>
+                            </div>
+                            <div className="text-center text-gray-600 text-xs">&darr;</div>
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="text-gray-500">Ke:</span>
+                              <span className="text-green-400 font-medium">{mutasi.lokasi_baru_nama} ({mutasi.lokasi_baru_kode})</span>
+                              <span className="text-gray-600">&bull;</span>
+                              <span className="text-gray-400">{mutasi.nama_perangkat_baru}</span>
+                            </div>
+                            {mutasi.keterangan && (
+                              <div className="mt-3 pt-3 border-t border-gray-700">
+                                <p className="text-xs text-gray-500 mb-1">Keterangan:</p>
+                                <p className="text-xs text-gray-300">{mutasi.keterangan}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Kategori Perangkat Dialog */}
       {showKategoriDialog && (
