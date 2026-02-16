@@ -200,45 +200,38 @@
     transition: background-color 5000s ease-in-out 0s;
   }
 
-  /* Custom scrollbar for dark theme */
-  .scrollbar-thin::-webkit-scrollbar {
+  /* Global scrollbar — matches shadcn ScrollArea thumb (bg-border) */
+  *,
+  *::before,
+  *::after {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
-  
-  .scrollbar-thin::-webkit-scrollbar-track {
-    @apply bg-background;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-muted rounded-md;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/30;
-  }
 
-  /* Modern scrollbar */
-  .modern-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-  }
-  
-  .modern-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  .modern-scrollbar::-webkit-scrollbar-track {
+  ::-webkit-scrollbar-track {
     background: transparent;
   }
-  
-  .modern-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
   }
-  
-  .modern-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.35);
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--border-strong));
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }
 
