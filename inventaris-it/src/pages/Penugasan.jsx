@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { MagnifyingGlassPlusIcon } from '@heroicons/react/24/outline';
+import { TagIcon, UserIcon, ClockIcon, CheckCircleIcon, CalendarIcon } from '@heroicons/react/16/solid';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { getPagePermissions } from '../lib/pagePermissions';
+import { Badge } from '../components/ui/badge';
+import { ScrollArea, ScrollBar } from '../components/ui/scroll-area';
 
 const Penugasan = () => {
   const { user, profile } = useAuth();
@@ -1061,20 +1064,20 @@ const Penugasan = () => {
   };
 
   const getStatusBadge = (status) => {
-    const badges = {
-      scheduled: 'bg-cyan-100 text-cyan-800 border-2 border-cyan-300',
-      on_hold: 'bg-orange-100 text-orange-800 border-2 border-orange-300',
-      pending: 'bg-yellow-100 text-yellow-800',
-      acknowledged: 'bg-blue-100 text-blue-800',
-      in_progress: 'bg-purple-100 text-purple-800',
-      paused: 'bg-orange-100 text-orange-800',
-      completed: 'bg-green-100 text-green-800',
-      cancelled: 'bg-gray-100 text-gray-800',
+    const styles = {
+      scheduled: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-400',
+      on_hold: 'border-orange-500/30 bg-orange-500/10 text-orange-400',
+      pending: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-400',
+      acknowledged: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
+      in_progress: 'border-purple-500/30 bg-purple-500/10 text-purple-400',
+      paused: 'border-orange-500/30 bg-orange-500/10 text-orange-400',
+      completed: 'border-green-500/30 bg-green-500/10 text-green-400',
+      cancelled: 'border-zinc-500/30 bg-zinc-500/10 text-zinc-400',
     };
     
     const labels = {
-      scheduled: '⏰ Dijadwalkan',
-      on_hold: '⏳ On Hold',
+      scheduled: 'Dijadwalkan',
+      on_hold: 'On Hold',
       pending: 'Menunggu',
       acknowledged: 'Dikonfirmasi',
       in_progress: 'Dikerjakan',
@@ -1084,9 +1087,9 @@ const Penugasan = () => {
     };
 
     return (
-      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${badges[status]}`}>
-        {labels[status]}
-      </span>
+      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${styles[status] || ''}`}>
+        {labels[status] || status}
+      </Badge>
     );
   };
 
@@ -1114,11 +1117,11 @@ const Penugasan = () => {
   };
 
   const getPriorityBadge = (priority) => {
-    const badges = {
-      low: 'bg-gray-100 text-gray-600',
-      normal: 'bg-blue-100 text-blue-600',
-      high: 'bg-orange-100 text-orange-600',
-      urgent: 'bg-red-100 text-red-600',
+    const styles = {
+      low: 'border-zinc-500/30 bg-zinc-500/10 text-zinc-400',
+      normal: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
+      high: 'border-orange-500/30 bg-orange-500/10 text-orange-400',
+      urgent: 'border-red-500/30 bg-red-500/10 text-red-400',
     };
     
     const labels = {
@@ -1129,9 +1132,9 @@ const Penugasan = () => {
     };
 
     return (
-      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${badges[priority]}`}>
-        {labels[priority]}
-      </span>
+      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${styles[priority] || ''}`}>
+        {labels[priority] || priority}
+      </Badge>
     );
   };
 
@@ -1552,8 +1555,34 @@ const Penugasan = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="space-y-3 text-[11px]" style={{ fontFamily: "'Open Sans', sans-serif" }}>
+          {/* Header Skeleton */}
+          <div className="flex justify-end">
+            <div className="h-8 w-64 bg-[#1a1a1a] rounded-sm animate-pulse" />
+          </div>
+
+          {/* Stats Skeleton */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="bg-black border border-[#1a1a1a] rounded-lg p-3">
+                <div className="h-3 w-16 bg-[#1a1a1a] rounded animate-pulse mb-2" />
+                <div className="h-6 w-10 bg-[#1a1a1a] rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+
+          {/* Table Skeleton */}
+          <div className="bg-black border border-[#1a1a1a] rounded-lg overflow-hidden">
+            <div className="h-9 bg-zinc-900/50 border-b border-[#1a1a1a]" />
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-3 py-3 border-b border-[#1a1a1a]">
+                <div className="h-3 w-20 bg-[#1a1a1a] rounded animate-pulse" />
+                <div className="h-3 bg-[#1a1a1a] rounded animate-pulse flex-1" style={{ maxWidth: `${50 + i * 8}%` }} />
+                <div className="h-3 w-16 bg-[#1a1a1a] rounded animate-pulse" />
+                <div className="h-4 w-14 bg-[#1a1a1a] rounded-full animate-pulse" />
+              </div>
+            ))}
+          </div>
         </div>
       </Layout>
     );
@@ -1561,46 +1590,46 @@ const Penugasan = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-3 text-[11px]" style={{ fontFamily: "'Open Sans', sans-serif" }}>
         {/* Header */}
-        <div className="flex justify-end mb-4">
-          <div className="inline-flex rounded-lg border border-cyan-500/40 overflow-hidden">
+        <div className="flex justify-end">
+          <div className="inline-flex rounded-sm border border-zinc-800 overflow-hidden">
             <button
               onClick={() => fetchTasks()}
-              className="bg-cyan-600/15 hover:bg-cyan-600/25 border-r border-cyan-500/40 hover:border-cyan-400/60 text-cyan-200 px-4 py-2 font-medium transition"
+              className="bg-zinc-900 hover:bg-zinc-800 border-r border-zinc-800 text-zinc-300 px-3 py-1.5 text-xs font-medium transition"
               title="Refresh table"
             >
-              🔄 Refresh
+              Refresh
             </button>
             <button
               onClick={handleOpenExport}
-              className="bg-cyan-600/15 hover:bg-cyan-600/25 border-r border-cyan-500/40 hover:border-cyan-400/60 text-cyan-200 px-4 py-2 font-medium transition"
+              className="bg-zinc-900 hover:bg-zinc-800 border-r border-zinc-800 text-zinc-300 px-3 py-1.5 text-xs font-medium transition"
               title="Export data penugasan"
             >
-              Export Data
+              Export
             </button>
             {permissions.canDelete && (
               <button
                 onClick={handleOpenHistory}
-                className="bg-cyan-600/15 hover:bg-cyan-600/25 border-r border-cyan-500/40 hover:border-cyan-400/60 text-cyan-200 px-4 py-2 font-medium transition"
+                className="bg-zinc-900 hover:bg-zinc-800 border-r border-zinc-800 text-zinc-300 px-3 py-1.5 text-xs font-medium transition"
                 title="Lihat history tugas yang dihapus"
               >
-                History Sampah
+                History
               </button>
             )}
             {permissions.canCreate && (
               <>
                 <button
                   onClick={handleOpenSchedule}
-                  className="bg-cyan-600/15 hover:bg-cyan-600/25 border-r border-cyan-500/40 hover:border-cyan-400/60 text-cyan-200 px-6 py-2 font-medium transition"
+                  className="bg-zinc-900 hover:bg-zinc-800 border-r border-zinc-800 text-zinc-300 px-3 py-1.5 text-xs font-medium transition"
                 >
-                  Jadwalkan Tugas
+                  Jadwalkan
                 </button>
                 <button
                   onClick={handleAdd}
-                  className="bg-cyan-600/15 hover:bg-cyan-600/25 text-cyan-200 px-6 py-2 font-medium transition"
+                  className="bg-zinc-900 hover:bg-zinc-800 text-zinc-300 px-3 py-1.5 text-xs font-medium transition"
                 >
-                  Buat Tugas Baru
+                  + Buat Tugas
                 </button>
               </>
             )}
@@ -1609,86 +1638,117 @@ const Penugasan = () => {
 
         {/* DETAIL MODAL */}
         {showDetailModal && selectedTask && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 my-8">
-              <div className="flex justify-between items-start mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">Detail Penugasan</h2>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto modal-backdrop-enter"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) { setShowDetailModal(false); setSelectedTask(null); }
+            }}
+          >
+            <div className="bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full h-[70vh] md:w-[540px] md:h-[420px] my-4 md:my-8 font-['Open_Sans'] flex flex-col overflow-hidden modal-content-enter">
+              {/* Fixed Header */}
+              <div className="flex-shrink-0 flex justify-between items-start px-4 py-3 bg-black border-b border-gray-800">
+                <div className="min-w-0">
+                  <span className="font-bold text-white text-sm">Detail Penugasan</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-white font-bold text-xs font-mono">{selectedTask.task_number}</span>
+                    <span className="text-gray-600">•</span>
+                    {getStatusBadge(selectedTask.status)}
+                    {getPriorityBadge(selectedTask.priority)}
+                  </div>
+                </div>
                 <button
-                  onClick={() => {
-                    setShowDetailModal(false);
-                    setSelectedTask(null);
-                  }}
-                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none"
+                  type="button"
+                  onClick={() => { setShowDetailModal(false); setSelectedTask(null); }}
+                  className="flex-shrink-0 text-gray-400 hover:text-white transition text-lg font-bold leading-none ml-2"
+                  title="Tutup"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="space-y-4">
-                {/* Task Number */}
-                <div>
-                  <p className="text-sm text-gray-600">Nomor Tugas</p>
-                  <p className="text-xl font-mono font-bold text-orange-500">{selectedTask.task_number}</p>
-                </div>
-
-                {/* Title & Description */}
-                <div>
-                  <p className="text-sm text-gray-600">Judul</p>
-                  <p className="text-lg font-semibold text-gray-900">{selectedTask.title}</p>
-                </div>
-
-                {selectedTask.description && (
-                  <div>
-                    <p className="text-sm text-gray-600">Deskripsi</p>
-                    <p className="text-sm text-gray-800 whitespace-pre-wrap">{selectedTask.description}</p>
+              {/* Scrollable Content */}
+              <ScrollArea className="flex-1">
+              <div className="p-4">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 text-gray-100 text-xs">
+                  <div className="col-span-2">
+                    <p className="text-xs text-gray-500 mb-0.5">Judul</p>
+                    <p className="text-xs font-semibold text-white">{selectedTask.title}</p>
                   </div>
-                )}
 
-                {/* Status & Priority */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Status</p>
-                    {getStatusBadge(selectedTask.status)}
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Prioritas</p>
-                    {getPriorityBadge(selectedTask.priority)}
-                  </div>
-                </div>
+                  {selectedTask.description && (
+                    <div className="col-span-2">
+                      <p className="text-xs text-gray-500 mb-0.5">Deskripsi</p>
+                      <p className="text-xs text-gray-300 whitespace-pre-wrap">{selectedTask.description}</p>
+                    </div>
+                  )}
 
-                {/* Scheduled time (read-only until activated) */}
-                {selectedTask.status === 'scheduled' && selectedTask.scheduled_for && (
-                  <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-3">
-                    <p className="text-sm text-cyan-800">
-                      ⏰ Dijadwalkan untuk: <span className="font-mono font-semibold">{formatDate(selectedTask.scheduled_for)}</span>
+                  {/* Scheduled time */}
+                  {selectedTask.status === 'scheduled' && selectedTask.scheduled_for && (
+                    <div className="col-span-2 bg-gray-950 border border-gray-800 rounded-lg p-2.5">
+                      <p className="text-xs text-gray-300">
+                        Dijadwalkan: <span className="font-mono font-semibold text-white">{formatDate(selectedTask.scheduled_for)}</span>
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Aksi muncul setelah waktu jadwal tiba.
+                      </p>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-xs text-gray-500 mb-0.5">Kategori SKP</p>
+                    <p className="text-xs">{selectedTask.skp_category?.name || '-'}</p>
+                  </div>
+
+                  {selectedTask.assigned_by_user && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Dari (Penugas)</p>
+                      <p className="text-xs">{selectedTask.assigned_by_user?.full_name || selectedTask.assigned_by_user}</p>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-xs text-gray-500 mb-0.5">Dibuat</p>
+                    <p className="text-xs">{formatDate(selectedTask.created_at)}</p>
+                  </div>
+
+                  {selectedTask.assigned_at && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Ditugaskan</p>
+                      <p className="text-xs">{formatDate(selectedTask.assigned_at)}</p>
+                    </div>
+                  )}
+
+                  {selectedTask.completed_at && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">Selesai</p>
+                      <p className="text-xs">{formatDate(selectedTask.completed_at)}</p>
+                    </div>
+                  )}
+
+                  <div>
+                    <p className="text-xs text-gray-500 mb-0.5">Total Durasi</p>
+                    <p className="text-xs font-bold text-green-400">
+                      {(() => {
+                        let totalDuration = null;
+                        if (selectedTask.total_duration_minutes && selectedTask.total_duration_minutes > 0) {
+                          totalDuration = selectedTask.total_duration_minutes;
+                        } else if (selectedTask.assigned_at) {
+                          totalDuration = calculateDuration(selectedTask.assigned_at, selectedTask.completed_at || null);
+                        }
+                        return totalDuration && totalDuration > 0
+                          ? `${formatDuration(totalDuration)}${!selectedTask.completed_at ? ' (berjalan)' : ''}`
+                          : '0 menit';
+                      })()}
                     </p>
-                    <p className="text-xs text-cyan-700 mt-1">
-                      Aksi (start/progress) akan muncul setelah waktu jadwal tiba dan status berubah menjadi <span className="font-mono">pending</span>.
-                    </p>
                   </div>
-                )}
-
-                {/* SKP Category */}
-                <div>
-                  <p className="text-sm text-gray-600">Kategori SKP</p>
-                  <p className="text-sm font-semibold text-gray-900">{selectedTask.skp_category?.name}</p>
                 </div>
-
-                {/* Assignor (Dari) */}
-                {selectedTask.assigned_by_user && (
-                  <div>
-                    <p className="text-sm text-gray-600">Dari (Penugas)</p>
-                    <p className="text-sm font-semibold text-gray-900">{selectedTask.assigned_by_user?.full_name || selectedTask.assigned_by_user}</p>
-                  </div>
-                )}
 
                 {/* Assigned Users */}
                 {selectedTask.assigned_users && selectedTask.assigned_users.length > 0 && (
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">Petugas IT Support Ditugaskan ({selectedTask.assigned_users.length})</p>
-                    <div className="space-y-2">
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold text-white mb-2">Petugas IT Support ({selectedTask.assigned_users.length})</p>
+                    <div className="space-y-1.5">
                       {selectedTask.assigned_users.map((au, idx) => {
-                        // Handle different possible data structures from Supabase
                         const userName = au.profiles?.full_name || 
                                        (au.profiles && typeof au.profiles === 'object' && au.profiles.full_name) ||
                                        'Unknown';
@@ -1696,62 +1756,50 @@ const Penugasan = () => {
                                         (au.profiles && typeof au.profiles === 'object' && au.profiles.email) ||
                                         '';
                         return (
-                          <div
-                            key={idx}
-                            className="bg-slate-800 border border-slate-700 p-3 rounded-lg"
-                          >
-                            <div className="flex items-center gap-3 mb-2">
-                              <span className="text-xl">👤</span>
+                          <div key={idx} className="bg-gray-950 border border-gray-800 rounded-lg p-2.5">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <UserIcon className="w-3 h-3 text-gray-500 flex-shrink-0" />
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-slate-100 truncate">{userName}</p>
-                                {userEmail && <p className="text-xs text-slate-300 truncate">{userEmail}</p>}
+                                <p className="text-xs font-semibold text-white truncate">{userName}</p>
+                                {userEmail && <p className="text-[10px] text-gray-500 truncate">{userEmail}</p>}
                               </div>
                               {getStatusBadge(au.status)}
                             </div>
-                            {/* Per-user timestamps */}
-                            <div className="mt-2 pt-2 border-t border-slate-600 space-y-1 text-xs">
+                            <div className="pt-1.5 border-t border-gray-800 space-y-0.5 text-[10px]">
                               {au.acknowledged_at && (
-                                <div className="flex items-center gap-2 text-slate-300">
-                                  <span>✅</span>
+                                <div className="flex items-center gap-1.5 text-gray-400">
                                   <span>Direspon:</span>
                                   <span className="font-mono">{formatDate(au.acknowledged_at)}</span>
                                 </div>
                               )}
                               {au.started_at && (
-                                <div className="flex items-center gap-2 text-slate-300">
-                                  <span>▶️</span>
+                                <div className="flex items-center gap-1.5 text-gray-400">
                                   <span>Dimulai:</span>
                                   <span className="font-mono">{formatDate(au.started_at)}</span>
                                 </div>
                               )}
                               {au.completed_at && (
-                                <div className="flex items-center gap-2 text-green-400">
-                                  <span>✓</span>
+                                <div className="flex items-center gap-1.5 text-green-400">
                                   <span>Selesai:</span>
                                   <span className="font-mono">{formatDate(au.completed_at)}</span>
                                 </div>
                               )}
                               {(() => {
-                                // Calculate duration from assigned_at (when task was assigned) to completed_at (or now if in progress)
                                 let duration = null;
-                                
                                 if (au.work_duration_minutes && au.work_duration_minutes > 0) {
                                   duration = au.work_duration_minutes;
                                 } else {
-                                  // Use task's assigned_at as the start point for per-user duration
                                   const startTime = selectedTask.assigned_at || selectedTask.created_at;
                                   if (startTime) {
                                     duration = calculateDuration(startTime, au.completed_at || null);
                                   }
                                 }
-                                
                                 return duration && duration > 0 ? (
-                                  <div className="flex items-center gap-2 text-slate-300">
-                                    <span>⏱️</span>
+                                  <div className="flex items-center gap-1.5 text-gray-400">
                                     <span>Durasi:</span>
                                     <span className="font-semibold">
                                       {formatDuration(duration)}
-                                      {!au.completed_at && ' (sedang berjalan)'}
+                                      {!au.completed_at && ' (berjalan)'}
                                     </span>
                                   </div>
                                 ) : null;
@@ -1766,112 +1814,43 @@ const Penugasan = () => {
 
                 {/* Assigned Devices */}
                 {selectedTask.assigned_devices && selectedTask.assigned_devices.length > 0 && (
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">Perangkat Ditugaskan ({selectedTask.assigned_devices.length})</p>
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold text-white mb-2">Perangkat ({selectedTask.assigned_devices.length})</p>
                     <div className="space-y-1">
                       {selectedTask.assigned_devices.map((ad, idx) => (
-                        <div key={idx} className="flex items-center gap-2 bg-gray-50 p-2 rounded text-sm">
-                          <span className="font-mono font-bold text-yellow-600">{ad.perangkat?.id_perangkat}</span>
+                        <div key={idx} className="flex items-center gap-2 bg-gray-950 border border-gray-800 p-2 rounded-lg text-xs">
+                          <span className="font-mono font-bold text-yellow-400">{ad.perangkat?.id_perangkat}</span>
                           <span className="text-gray-600">-</span>
-                          <span className="text-gray-900">{ad.perangkat?.nama_perangkat}</span>
+                          <span className="text-gray-300">{ad.perangkat?.nama_perangkat}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
-
-                {/* Task Timeline */}
-                <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
-                  <p className="text-sm font-semibold text-slate-100 mb-3">📅 Timeline Tugas</p>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-3">
-                      <span className="text-blue-400 font-semibold min-w-[100px]">Dibuat:</span>
-                      <span className="text-slate-200 font-mono">{formatDate(selectedTask.created_at)}</span>
-                    </div>
-                    {selectedTask.assigned_at && (
-                      <div className="flex items-center gap-3">
-                        <span className="text-blue-400 font-semibold min-w-[100px]">Ditugaskan:</span>
-                        <span className="text-slate-200 font-mono">{formatDate(selectedTask.assigned_at)}</span>
-                      </div>
-                    )}
-                    {selectedTask.acknowledged_at && (
-                      <div className="flex items-center gap-3">
-                        <span className="text-green-400 font-semibold min-w-[100px]">✅ Direspon:</span>
-                        <span className="text-slate-200 font-mono">{formatDate(selectedTask.acknowledged_at)}</span>
-                      </div>
-                    )}
-                    {selectedTask.started_at && (
-                      <div className="flex items-center gap-3">
-                        <span className="text-purple-400 font-semibold min-w-[100px]">▶️ Dimulai:</span>
-                        <span className="text-slate-200 font-mono">{formatDate(selectedTask.started_at)}</span>
-                      </div>
-                    )}
-                    {selectedTask.completed_at && (
-                      <div className="flex items-center gap-3">
-                        <span className="text-green-400 font-semibold min-w-[100px]">✓ Selesai:</span>
-                        <span className="text-slate-200 font-mono">{formatDate(selectedTask.completed_at)}</span>
-                      </div>
-                    )}
-                    {(() => {
-                      // Calculate total duration from assigned_at to completed_at (or now if in progress)
-                      let totalDuration = null;
-                      
-                      // First, try to use the stored total_duration_minutes
-                      if (selectedTask.total_duration_minutes && selectedTask.total_duration_minutes > 0) {
-                        totalDuration = selectedTask.total_duration_minutes;
-                      } 
-                      // If not available, calculate from assigned_at to completed_at
-                      else if (selectedTask.assigned_at) {
-                        if (selectedTask.completed_at) {
-                          // Task is completed, calculate from assigned_at to completed_at
-                          totalDuration = calculateDuration(selectedTask.assigned_at, selectedTask.completed_at);
-                        } else {
-                          // Task is in progress, calculate from assigned_at to now
-                          totalDuration = calculateDuration(selectedTask.assigned_at, null);
-                        }
-                      }
-                      
-                      return totalDuration && totalDuration > 0 ? (
-                        <div className="flex items-center gap-3 pt-2 border-t border-slate-600">
-                          <span className="text-blue-400 font-semibold min-w-[100px]">⏱️ Total Durasi:</span>
-                          <span className="text-slate-100 font-bold">
-                            {formatDuration(totalDuration)}
-                            {!selectedTask.completed_at && ' (sedang berjalan)'}
-                          </span>
-                        </div>
-                      ) : null;
-                    })()}
-                  </div>
-                </div>
               </div>
+              </ScrollArea>
 
-              {/* Actions */}
-              <div className="flex gap-3 justify-end pt-6 border-t mt-6">
+              {/* Fixed Footer */}
+              <div className="flex-shrink-0 p-3 border-t border-gray-800 flex justify-center items-center gap-2 bg-black">
                 {canEditAnyTask && (
                   <button
                     onClick={() => handleOpenEdit(selectedTask)}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm"
+                    className="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition"
                   >
-                    ✏️ Edit
+                    Edit
                   </button>
                 )}
                 {selectedTask.status === 'pending' && permissions.canDelete && (
                   <button
-                    onClick={() => {
-                      setShowDetailModal(false);
-                      handleDeleteClick(selectedTask);
-                    }}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
+                    onClick={() => { setShowDetailModal(false); handleDeleteClick(selectedTask); }}
+                    className="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-500 text-white rounded-lg transition"
                   >
-                    🗑️ Hapus Tugas
+                    Hapus
                   </button>
                 )}
                 <button
-                  onClick={() => {
-                    setShowDetailModal(false);
-                    setSelectedTask(null);
-                  }}
-                  className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+                  onClick={() => { setShowDetailModal(false); setSelectedTask(null); }}
+                  className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition"
                 >
                   Tutup
                 </button>
@@ -1882,46 +1861,52 @@ const Penugasan = () => {
 
         {/* EDIT MODAL (Admin & Helpdesk) */}
         {showEditModal && selectedTask && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-6 my-8">
-              <div className="flex justify-between items-start mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">✏️ Edit Penugasan</h2>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50 overflow-y-auto modal-backdrop-enter"
+            onClick={(e) => { if (e.target === e.currentTarget) setShowEditModal(false); }}
+          >
+            <div className="bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full md:w-[540px] my-4 md:my-8 font-['Open_Sans'] flex flex-col overflow-hidden modal-content-enter max-h-[85vh]">
+              {/* Fixed Header */}
+              <div className="flex-shrink-0 flex justify-between items-start px-4 py-3 bg-black border-b border-gray-800">
+                <span className="font-bold text-white text-sm">Edit Penugasan</span>
                 <button
                   onClick={() => setShowEditModal(false)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none"
+                  className="flex-shrink-0 text-gray-400 hover:text-white transition text-lg font-bold leading-none ml-2"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="space-y-4">
+              {/* Scrollable Content */}
+              <ScrollArea className="flex-1">
+              <div className="p-4 space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Judul *</label>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Judul *</label>
                   <input
                     type="text"
                     value={editForm.title}
                     onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Deskripsi</label>
                   <textarea
-                    rows={4}
+                    rows={3}
                     value={editForm.description}
                     onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Prioritas</label>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Prioritas</label>
                     <select
                       value={editForm.priority}
                       onChange={(e) => setEditForm({ ...editForm, priority: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
                     >
                       <option value="low">Rendah</option>
                       <option value="normal">Normal</option>
@@ -1931,49 +1916,41 @@ const Penugasan = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Kategori SKP *</label>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Kategori SKP *</label>
                     <select
                       value={editForm.skp_category_id}
                       onChange={(e) => setEditForm({ ...editForm, skp_category_id: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
                     >
                       <option value="">-- Pilih SKP --</option>
                       {skpCategories.map((skp) => (
-                        <option key={skp.id} value={skp.id}>
-                          {skp.name}
-                        </option>
+                        <option key={skp.id} value={skp.id}>{skp.name}</option>
                       ))}
                     </select>
                   </div>
                 </div>
 
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                  <p className="text-sm text-gray-700 font-medium mb-2">👤 Petugas IT Support (tidak diubah)</p>
-                  <div className="text-sm text-gray-700">
+                <div className="bg-gray-950 border border-gray-800 rounded-lg p-2.5">
+                  <p className="text-xs text-gray-400 font-medium mb-1">Petugas IT Support (tidak diubah)</p>
+                  <div className="text-xs text-gray-300">
                     {(selectedTask.assigned_users || []).length > 0
                       ? selectedTask.assigned_users.map((u, idx) => (
-                          <div key={idx}>
-                            - {u.profiles?.full_name || 'Unknown'} {u.profiles?.email ? `(${u.profiles.email})` : ''}
-                          </div>
+                          <div key={idx}>- {u.profiles?.full_name || 'Unknown'} {u.profiles?.email ? `(${u.profiles.email})` : ''}</div>
                         ))
                       : '-'}
                   </div>
                 </div>
 
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                  <label className="flex items-center gap-2 text-xs font-medium text-gray-400 mb-2">
                     <input
                       type="checkbox"
                       checked={!!editForm.relate_perangkat}
                       onChange={(e) => {
                         const checked = e.target.checked;
-                        setEditForm({
-                          ...editForm,
-                          relate_perangkat: checked,
-                          assigned_perangkat: checked ? editForm.assigned_perangkat : [],
-                        });
+                        setEditForm({ ...editForm, relate_perangkat: checked, assigned_perangkat: checked ? editForm.assigned_perangkat : [] });
                       }}
-                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      className="w-3.5 h-3.5 text-zinc-500 bg-gray-950 border-gray-700 rounded focus:ring-gray-600"
                     />
                     Relasi ke Perangkat? (opsional)
                   </label>
@@ -1985,65 +1962,61 @@ const Penugasan = () => {
                         placeholder="Cari ID Perangkat..."
                         value={perangkatSearch}
                         onChange={(e) => setPerangkatSearch(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent mb-2"
+                        className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent mb-2"
                       />
-                      <div className="space-y-2 max-h-48 overflow-y-auto bg-white border border-gray-200 rounded-lg p-3">
+                      <ScrollArea className="max-h-36 bg-gray-950 border border-gray-800 rounded-lg">
+                        <div className="space-y-1 p-2.5">
                         {perangkatList
                           .filter(p =>
                             p.id_perangkat.toLowerCase().includes(perangkatSearch.toLowerCase()) ||
                             (p.nama_perangkat && p.nama_perangkat.toLowerCase().includes(perangkatSearch.toLowerCase()))
                           )
                           .map((perangkat) => (
-                            <label key={perangkat.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <label key={perangkat.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-900 p-1.5 rounded text-xs">
                               <input
                                 type="checkbox"
                                 checked={editForm.assigned_perangkat.includes(perangkat.id)}
                                 onChange={(e) => {
                                   if (e.target.checked) {
-                                    setEditForm({
-                                      ...editForm,
-                                      assigned_perangkat: [...editForm.assigned_perangkat, perangkat.id],
-                                    });
+                                    setEditForm({ ...editForm, assigned_perangkat: [...editForm.assigned_perangkat, perangkat.id] });
                                   } else {
-                                    setEditForm({
-                                      ...editForm,
-                                      assigned_perangkat: editForm.assigned_perangkat.filter(id => id !== perangkat.id),
-                                    });
+                                    setEditForm({ ...editForm, assigned_perangkat: editForm.assigned_perangkat.filter(id => id !== perangkat.id) });
                                   }
                                 }}
-                                className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                className="w-3.5 h-3.5 text-zinc-500 bg-gray-900 border-gray-700 rounded focus:ring-gray-600"
                               />
-                              <span className="text-sm flex-1">
-                                <span className="font-mono font-semibold text-yellow-700">{perangkat.id_perangkat}</span>
+                              <span className="flex-1 text-gray-300">
+                                <span className="font-mono font-semibold text-yellow-400">{perangkat.id_perangkat}</span>
                                 {perangkat.nama_perangkat && ` - ${perangkat.nama_perangkat}`}
                               </span>
                             </label>
                           ))}
-                      </div>
+                        </div>
+                      </ScrollArea>
                       {editForm.assigned_perangkat.length > 0 && (
-                        <p className="text-xs text-indigo-600 mt-1">
-                          ✅ {editForm.assigned_perangkat.length} perangkat dipilih
-                        </p>
+                        <p className="text-[10px] text-green-400 mt-1">{editForm.assigned_perangkat.length} perangkat dipilih</p>
                       )}
                     </>
                   ) : (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-600">
+                    <div className="bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-xs text-gray-500">
                       Perangkat tidak diperlukan untuk tugas ini.
                     </div>
                   )}
                 </div>
               </div>
+              </ScrollArea>
 
-              <div className="flex gap-3 justify-end pt-6 border-t mt-6">
+              {/* Fixed Footer */}
+              <div className="flex-shrink-0 p-3 border-t border-gray-800 flex justify-center items-center gap-2 bg-black">
                 <button
                   onClick={() => setShowEditModal(false)}
-                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                  className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition"
                 >
                   Batal
                 </button>
                 <button
                   onClick={handleSaveEdit}
-                  className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                  className="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition"
                 >
                   Simpan
                 </button>
@@ -2054,170 +2027,121 @@ const Penugasan = () => {
 
         {/* DELETION HISTORY MODAL */}
         {showHistoryModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto my-8">
-              {/* Header */}
-              <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-start">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">🗑️ History Tugas yang Dihapus</h2>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Audit trail untuk semua tugas yang telah dihapus
-                  </p>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto modal-backdrop-enter"
+            onClick={(e) => { if (e.target === e.currentTarget) { setShowHistoryModal(false); setDeletionHistory([]); } }}
+          >
+            <div className="bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full h-[75vh] md:w-[600px] md:h-[450px] my-4 md:my-8 font-['Open_Sans'] flex flex-col overflow-hidden modal-content-enter">
+              {/* Fixed Header */}
+              <div className="flex-shrink-0 flex justify-between items-start px-4 py-3 bg-black border-b border-gray-800">
+                <div className="min-w-0">
+                  <span className="font-bold text-white text-sm">History Penghapusan</span>
+                  <p className="text-[10px] text-gray-500 mt-0.5">Audit trail tugas yang dihapus</p>
                 </div>
                 <button
-                  onClick={() => {
-                    setShowHistoryModal(false);
-                    setDeletionHistory([]);
-                  }}
-                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none"
+                  onClick={() => { setShowHistoryModal(false); setDeletionHistory([]); }}
+                  className="flex-shrink-0 text-gray-400 hover:text-white transition text-lg font-bold leading-none ml-2"
                 >
                   ×
                 </button>
               </div>
 
-              {/* Content */}
-              <div className="p-6">
+              {/* Scrollable Content */}
+              <ScrollArea className="flex-1">
+              <div className="p-4">
                 {loadingHistory ? (
                   <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                    <div className="animate-spin rounded-full h-6 w-6 border-2 border-zinc-500 border-t-zinc-100" />
                   </div>
                 ) : deletionHistory.length === 0 ? (
                   <div className="text-center py-12">
-                    <p className="text-lg text-gray-500">Belum ada tugas yang dihapus</p>
-                    <p className="text-sm text-gray-400 mt-2">History akan muncul di sini ketika ada tugas yang dihapus</p>
+                    <p className="text-xs text-gray-500">Belum ada tugas yang dihapus</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {/* Summary */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <p className="text-sm text-blue-800">
-                        📊 Total: <span className="font-bold text-lg">{deletionHistory.length}</span> tugas telah dihapus
+                  <div className="space-y-2">
+                    <div className="bg-gray-950 border border-gray-800 rounded-lg p-2.5 mb-3">
+                      <p className="text-xs text-gray-300">
+                        Total: <span className="text-sm font-bold text-white">{deletionHistory.length}</span> tugas dihapus
                       </p>
                     </div>
 
-                    {/* List */}
                     {deletionHistory.map((item, index) => (
-                      <div key={item.id} className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition">
-                        {/* Header Row */}
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <span className="text-2xl font-bold text-gray-400">#{index + 1}</span>
-                            <div>
-                              <p className="text-sm font-mono font-bold text-red-600">{item.task_number}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                {item.status === 'pending' && (
-                                  <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded">
-                                    Pending
-                                  </span>
-                                )}
-                                {item.priority && (
-                                  <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
-                                    item.priority === 'urgent' ? 'bg-red-100 text-red-800' :
-                                    item.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                    item.priority === 'normal' ? 'bg-blue-100 text-blue-800' :
-                                    'bg-gray-100 text-gray-800'
-                                  }`}>
-                                    {item.priority}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
+                      <div key={item.id} className="bg-gray-950 border border-gray-800 rounded-lg p-3 hover:border-gray-700 transition">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-gray-600">#{index + 1}</span>
+                            <span className="text-xs font-mono font-bold text-red-400">{item.task_number}</span>
+                            {item.status === 'pending' && getStatusBadge('pending')}
+                            {item.priority && getPriorityBadge(item.priority)}
                           </div>
-                          <div className="text-right text-sm text-gray-500">
-                            <p className="font-semibold text-red-600">Dihapus: {formatDate(item.deleted_at)}</p>
-                            <p className="text-xs">Dibuat: {formatDate(item.created_at)}</p>
+                          <div className="text-right">
+                            <p className="text-[10px] text-red-400">{formatDate(item.deleted_at)}</p>
                           </div>
                         </div>
 
-                        {/* Task Info */}
-                        <div className="mb-3">
-                          <h3 className="text-lg font-bold text-gray-900 mb-1">{item.task_title}</h3>
-                          {item.task_description && (
-                            <p className="text-sm text-gray-600 line-clamp-2">{item.task_description}</p>
-                          )}
-                        </div>
+                        <p className="text-xs font-semibold text-white mb-1">{item.task_title}</p>
+                        {item.task_description && (
+                          <p className="text-[10px] text-gray-400 line-clamp-2 mb-2">{item.task_description}</p>
+                        )}
 
-                        {/* Grid Info */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                          {/* SKP Category */}
+                        <div className="grid grid-cols-3 gap-2 mb-2 text-[10px]">
                           {item.skp_category_name && (
                             <div>
-                              <p className="text-xs text-gray-500">SKP</p>
-                              <p className="text-sm font-medium text-gray-900">{item.skp_category_name}</p>
+                              <p className="text-gray-600">SKP</p>
+                              <p className="text-gray-300">{item.skp_category_name}</p>
                             </div>
                           )}
-
-                          {/* Assigned By */}
                           {item.assigned_by_name && (
                             <div>
-                              <p className="text-xs text-gray-500">Dibuat oleh</p>
-                              <p className="text-sm font-medium text-gray-900">{item.assigned_by_name}</p>
+                              <p className="text-gray-600">Dibuat oleh</p>
+                              <p className="text-gray-300">{item.assigned_by_name}</p>
                             </div>
                           )}
-
-                          {/* Deleted By */}
                           <div>
-                            <p className="text-xs text-gray-500">Dihapus oleh</p>
-                            <p className="text-sm font-semibold text-red-600">{item.deleted_by_name || 'Unknown'}</p>
+                            <p className="text-gray-600">Dihapus oleh</p>
+                            <p className="text-red-400 font-semibold">{item.deleted_by_name || 'Unknown'}</p>
                           </div>
                         </div>
 
-                        {/* Assigned Users & Devices */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                          {/* Users */}
+                        <div className="grid grid-cols-2 gap-2 mb-2">
                           {item.user_count > 0 && (
-                            <div className="bg-blue-50 rounded-lg p-3">
-                              <p className="text-xs text-blue-700 font-semibold mb-2">
-                                👤 IT Support ({item.user_count})
-                              </p>
-                              <div className="space-y-1">
+                            <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-2">
+                              <p className="text-[10px] text-blue-400 font-semibold mb-1">IT Support ({item.user_count})</p>
+                              <div className="space-y-0.5">
                                 {item.assigned_users && (typeof item.assigned_users === 'string' ? JSON.parse(item.assigned_users) : item.assigned_users).map((u, idx) => (
-                                  <p key={idx} className="text-xs text-blue-900">
-                                    • {u.name} ({u.email})
-                                  </p>
+                                  <p key={idx} className="text-[10px] text-gray-400">• {u.name}</p>
                                 ))}
                               </div>
                             </div>
                           )}
-
-                          {/* Devices */}
                           {item.device_count > 0 && (
-                            <div className="bg-purple-50 rounded-lg p-3">
-                              <p className="text-xs text-purple-700 font-semibold mb-2">
-                                🔧 Perangkat ({item.device_count})
-                              </p>
-                              <div className="space-y-1">
+                            <div className="bg-purple-500/5 border border-purple-500/20 rounded-lg p-2">
+                              <p className="text-[10px] text-purple-400 font-semibold mb-1">Perangkat ({item.device_count})</p>
+                              <div className="space-y-0.5">
                                 {item.assigned_devices && (typeof item.assigned_devices === 'string' ? JSON.parse(item.assigned_devices) : item.assigned_devices).map((d, idx) => (
-                                  <p key={idx} className="text-xs text-purple-900 font-mono">
-                                    • {d.id_perangkat} - {d.nama_perangkat}
-                                  </p>
+                                  <p key={idx} className="text-[10px] text-gray-400 font-mono">• {d.id_perangkat}</p>
                                 ))}
                               </div>
                             </div>
                           )}
                         </div>
 
-                        {/* Deletion Reason */}
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                          <p className="text-xs font-semibold text-red-700 mb-1">💬 Alasan Penghapusan:</p>
-                          <p className="text-sm text-red-900 italic">
-                            "{item.deletion_reason || 'Tidak ada alasan'}"
-                          </p>
+                        <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-2">
+                          <p className="text-[10px] text-red-400 font-semibold mb-0.5">Alasan:</p>
+                          <p className="text-[10px] text-gray-400 italic">"{item.deletion_reason || 'Tidak ada alasan'}"</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
+              </ScrollArea>
 
-              {/* Footer */}
-              <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-4 flex justify-end">
+              {/* Fixed Footer */}
+              <div className="flex-shrink-0 p-3 border-t border-gray-800 flex justify-center bg-black">
                 <button
-                  onClick={() => {
-                    setShowHistoryModal(false);
-                    setDeletionHistory([]);
-                  }}
-                  className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+                  onClick={() => { setShowHistoryModal(false); setDeletionHistory([]); }}
+                  className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition"
                 >
                   Tutup
                 </button>
@@ -2228,68 +2152,43 @@ const Penugasan = () => {
 
         {/* EXPORT MODAL */}
         {showExportModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">📥 Export Data Penugasan</h2>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal-backdrop-enter"
+            onClick={(e) => { if (e.target === e.currentTarget) { setShowExportModal(false); setExportMonth(''); setExportYear(new Date().getFullYear().toString()); setExportStartDate(''); setExportEndDate(''); } }}
+          >
+            <div className="bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full md:w-[420px] font-['Open_Sans'] flex flex-col overflow-hidden modal-content-enter">
+              {/* Fixed Header */}
+              <div className="flex-shrink-0 flex justify-between items-start px-4 py-3 bg-black border-b border-gray-800">
+                <span className="font-bold text-white text-sm">Export Data Penugasan</span>
                 <button
-                  onClick={() => {
-                    setShowExportModal(false);
-                    setExportMonth('');
-                    setExportYear(new Date().getFullYear().toString());
-                    setExportStartDate('');
-                    setExportEndDate('');
-                  }}
-                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none"
+                  onClick={() => { setShowExportModal(false); setExportMonth(''); setExportYear(new Date().getFullYear().toString()); setExportStartDate(''); setExportEndDate(''); }}
+                  className="flex-shrink-0 text-gray-400 hover:text-white transition text-lg font-bold leading-none ml-2"
                 >
                   ×
                 </button>
               </div>
-              
-              <div className="space-y-4">
-                {/* Export Type Selection */}
+
+              {/* Content */}
+              <div className="p-4 space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Pilih metode export:
-                  </label>
+                  <label className="block text-xs font-medium text-gray-400 mb-2">Metode export:</label>
                   <div className="flex gap-4">
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="exportType"
-                        value="month"
-                        checked={exportType === 'month'}
-                        onChange={(e) => setExportType(e.target.value)}
-                        className="w-4 h-4 text-blue-600"
-                      />
-                      <span className="text-sm text-gray-700">By Month</span>
+                      <input type="radio" name="exportType" value="month" checked={exportType === 'month'} onChange={(e) => setExportType(e.target.value)} className="w-3.5 h-3.5 text-zinc-500" />
+                      <span className="text-xs text-gray-300">By Month</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="exportType"
-                        value="daterange"
-                        checked={exportType === 'daterange'}
-                        onChange={(e) => setExportType(e.target.value)}
-                        className="w-4 h-4 text-blue-600"
-                      />
-                      <span className="text-sm text-gray-700">By Date Range</span>
+                      <input type="radio" name="exportType" value="daterange" checked={exportType === 'daterange'} onChange={(e) => setExportType(e.target.value)} className="w-3.5 h-3.5 text-zinc-500" />
+                      <span className="text-xs text-gray-300">By Date Range</span>
                     </label>
                   </div>
                 </div>
 
-                {/* Month Selection */}
                 {exportType === 'month' && (
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Bulan *
-                      </label>
-                      <select
-                        value={exportMonth}
-                        onChange={(e) => setExportMonth(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Bulan *</label>
+                      <select value={exportMonth} onChange={(e) => setExportMonth(e.target.value)} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent">
                         <option value="">Pilih Bulan</option>
                         <option value="01">Januari</option>
                         <option value="02">Februari</option>
@@ -2306,83 +2205,53 @@ const Penugasan = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Tahun *
-                      </label>
-                      <input
-                        type="number"
-                        value={exportYear}
-                        onChange={(e) => setExportYear(e.target.value)}
-                        min="2020"
-                        max={new Date().getFullYear() + 1}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="2024"
-                      />
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Tahun *</label>
+                      <input type="number" value={exportYear} onChange={(e) => setExportYear(e.target.value)} min="2020" max={new Date().getFullYear() + 1} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent" placeholder="2024" />
                     </div>
                   </div>
                 )}
 
-                {/* Date Range Selection */}
                 {exportType === 'daterange' && (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Tanggal Mulai *
-                      </label>
-                      <input
-                        type="date"
-                        value={exportStartDate}
-                        onChange={(e) => setExportStartDate(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Tanggal Mulai *</label>
+                      <input type="date" value={exportStartDate} onChange={(e) => setExportStartDate(e.target.value)} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Tanggal Akhir *
-                      </label>
-                      <input
-                        type="date"
-                        value={exportEndDate}
-                        onChange={(e) => setExportEndDate(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
+                      <label className="block text-xs font-medium text-gray-400 mb-1">Tanggal Akhir *</label>
+                      <input type="date" value={exportEndDate} onChange={(e) => setExportEndDate(e.target.value)} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent" />
                     </div>
                   </div>
                 )}
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-xs text-blue-800">
-                    💡 Data akan diekspor dalam format CSV dan berisi semua informasi penugasan termasuk petugas IT Support dan perangkat yang ditugaskan.
+                <div className="bg-gray-950 border border-gray-800 rounded-lg p-2.5">
+                  <p className="text-[10px] text-gray-500">
+                    Data akan diekspor dalam format CSV termasuk petugas IT Support dan perangkat yang ditugaskan.
                   </p>
                 </div>
               </div>
 
-              <div className="flex gap-3 justify-end pt-6 border-t mt-6">
+              {/* Fixed Footer */}
+              <div className="flex-shrink-0 p-3 border-t border-gray-800 flex justify-center items-center gap-2 bg-black">
                 <button
-                  onClick={() => {
-                    setShowExportModal(false);
-                    setExportMonth('');
-                    setExportYear(new Date().getFullYear().toString());
-                    setExportStartDate('');
-                    setExportEndDate('');
-                  }}
+                  onClick={() => { setShowExportModal(false); setExportMonth(''); setExportYear(new Date().getFullYear().toString()); setExportStartDate(''); setExportEndDate(''); }}
                   disabled={exporting}
-                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
+                  className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition disabled:opacity-50"
                 >
                   Batal
                 </button>
                 <button
                   onClick={handleExport}
                   disabled={exporting || (exportType === 'month' && (!exportMonth || !exportYear)) || (exportType === 'daterange' && (!exportStartDate || !exportEndDate))}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-500 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {exporting ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-zinc-500 border-t-zinc-100" />
                       Mengekspor...
                     </>
                   ) : (
-                    '📥 Export'
+                    'Export'
                   )}
                 </button>
               </div>
@@ -2392,81 +2261,75 @@ const Penugasan = () => {
 
         {/* DELETE CONFIRMATION MODAL */}
         {showDeleteModal && selectedTask && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">⚠️ Hapus Tugas</h2>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal-backdrop-enter"
+            onClick={(e) => { if (e.target === e.currentTarget) { setShowDeleteModal(false); setSelectedTask(null); setDeletionReason(''); } }}
+          >
+            <div className="bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full md:w-[420px] font-['Open_Sans'] flex flex-col overflow-hidden modal-content-enter">
+              {/* Fixed Header */}
+              <div className="flex-shrink-0 flex justify-between items-start px-4 py-3 bg-black border-b border-gray-800">
+                <span className="font-bold text-white text-sm">Hapus Tugas</span>
                 <button
-                  onClick={() => {
-                    setShowDeleteModal(false);
-                    setSelectedTask(null);
-                    setDeletionReason('');
-                  }}
-                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none"
+                  onClick={() => { setShowDeleteModal(false); setSelectedTask(null); setDeletionReason(''); }}
+                  className="flex-shrink-0 text-gray-400 hover:text-white transition text-lg font-bold leading-none ml-2"
                 >
                   ×
                 </button>
               </div>
-              
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                <p className="text-sm font-semibold text-red-900 mb-1">{selectedTask.task_number}</p>
-                <p className="text-sm text-red-800">{selectedTask.title}</p>
-              </div>
 
-              {selectedTask.assigned_devices && selectedTask.assigned_devices.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Perangkat ditugaskan</p>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTask.assigned_devices.map((ad, idx) => (
-                      <span
-                        key={idx}
-                        className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-mono font-semibold"
-                        title={ad.perangkat?.nama_perangkat || ''}
-                      >
-                        {ad.perangkat?.id_perangkat || '-'}
-                      </span>
-                    ))}
-                  </div>
+              {/* Content */}
+              <div className="p-4 space-y-3">
+                <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3">
+                  <p className="text-xs font-mono font-bold text-red-400 mb-0.5">{selectedTask.task_number}</p>
+                  <p className="text-xs text-gray-300">{selectedTask.title}</p>
                 </div>
-              )}
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Alasan Penghapusan *
-                </label>
-                <textarea
-                  required
-                  value={deletionReason}
-                  onChange={(e) => setDeletionReason(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="Mengapa tugas ini dihapus? (wajib diisi untuk audit)"
-                  rows="3"
-                />
+                {selectedTask.assigned_devices && selectedTask.assigned_devices.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-400 mb-1.5">Perangkat ditugaskan</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedTask.assigned_devices.map((ad, idx) => (
+                        <span key={idx} className="px-1.5 py-0.5 bg-gray-950 border border-gray-800 text-yellow-400 rounded text-[10px] font-mono font-semibold" title={ad.perangkat?.nama_perangkat || ''}>
+                          {ad.perangkat?.id_perangkat || '-'}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Alasan Penghapusan *</label>
+                  <textarea
+                    required
+                    value={deletionReason}
+                    onChange={(e) => setDeletionReason(e.target.value)}
+                    className="w-full px-3 py-2 text-[10px] bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
+                    placeholder="Mengapa tugas ini dihapus? (wajib untuk audit)"
+                    rows="3"
+                  />
+                </div>
+
+                <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-lg p-2.5">
+                  <p className="text-[10px] text-yellow-400/80">
+                    Tugas akan dihapus dan diarsipkan ke history untuk audit.
+                  </p>
+                </div>
               </div>
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                <p className="text-xs text-yellow-800">
-                  ⚠️ Tugas akan dihapus dan diarsipkan ke history. Data dapat dilihat kembali untuk audit.
-                </p>
-              </div>
-
-              <div className="flex gap-3 justify-end">
+              {/* Fixed Footer */}
+              <div className="flex-shrink-0 p-3 border-t border-gray-800 flex justify-center items-center gap-2 bg-black">
                 <button
-                  onClick={() => {
-                    setShowDeleteModal(false);
-                    setSelectedTask(null);
-                    setDeletionReason('');
-                  }}
-                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                  onClick={() => { setShowDeleteModal(false); setSelectedTask(null); setDeletionReason(''); }}
+                  className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition"
                 >
                   Batal
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
                   disabled={!deletionReason.trim()}
-                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-500 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  🗑️ Ya, Hapus
+                  Ya, Hapus
                 </button>
               </div>
             </div>
@@ -2475,494 +2338,224 @@ const Penugasan = () => {
 
         {/* Schedule Task Modal */}
         {showScheduleModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full p-6 my-8 relative max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-start mb-4">
-                <h2 className="text-2xl font-bold text-white">
-                  ⏰ Jadwalkan Penugasan
-                </h2>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50 overflow-y-auto modal-backdrop-enter"
+            onClick={(e) => { if (e.target === e.currentTarget) { setShowScheduleModal(false); setScheduleForm({ title: '', description: '', priority: 'normal', skp_category_id: '', assigned_users: [], scheduled_date: '', scheduled_hour: '', scheduled_minute: '', relate_perangkat: true, assigned_perangkat: [] }); } }}
+          >
+            <div className="bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full md:w-[540px] my-4 md:my-8 font-['Open_Sans'] flex flex-col overflow-hidden modal-content-enter max-h-[85vh]">
+              {/* Fixed Header */}
+              <div className="flex-shrink-0 flex justify-between items-start px-4 py-3 bg-black border-b border-gray-800">
+                <span className="font-bold text-white text-sm">Jadwalkan Penugasan</span>
                 <button
                   onClick={() => {
                     setShowScheduleModal(false);
-                    setScheduleForm({
-                      title: '',
-                      description: '',
-                      priority: 'normal',
-                      skp_category_id: '',
-                      assigned_users: [],
-                      scheduled_date: '',
-                      scheduled_hour: '',
-                      scheduled_minute: '',
-                      relate_perangkat: true,
-                      assigned_perangkat: [],
-                    });
+                    setScheduleForm({ title: '', description: '', priority: 'normal', skp_category_id: '', assigned_users: [], scheduled_date: '', scheduled_hour: '', scheduled_minute: '', relate_perangkat: true, assigned_perangkat: [] });
                   }}
-                  className="text-gray-400 hover:text-gray-200 text-2xl font-bold leading-none"
+                  className="flex-shrink-0 text-gray-400 hover:text-white transition text-lg font-bold leading-none ml-2"
                 >
                   ×
                 </button>
               </div>
-              <form onSubmit={handleSubmitSchedule} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Scrollable Content */}
+              <ScrollArea className="flex-1">
+              <form onSubmit={handleSubmitSchedule} className="p-4 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Tanggal Jadwal *
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={scheduleForm.scheduled_date}
-                      onChange={(e) => setScheduleForm({ ...scheduleForm, scheduled_date: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                    />
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Tanggal Jadwal *</label>
+                    <input type="date" required value={scheduleForm.scheduled_date} onChange={(e) => setScheduleForm({ ...scheduleForm, scheduled_date: e.target.value })} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent" />
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Jam Jadwal (24h) *
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <select
-                        required
-                        value={scheduleForm.scheduled_hour}
-                        onChange={(e) => setScheduleForm({ ...scheduleForm, scheduled_hour: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                      >
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Jam (24h) *</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <select required value={scheduleForm.scheduled_hour} onChange={(e) => setScheduleForm({ ...scheduleForm, scheduled_hour: e.target.value })} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent">
                         <option value="">HH</option>
-                        {Array.from({ length: 24 }).map((_, h) => (
-                          <option key={h} value={String(h)}>
-                            {String(h).padStart(2, '0')}
-                          </option>
-                        ))}
+                        {Array.from({ length: 24 }).map((_, h) => (<option key={h} value={String(h)}>{String(h).padStart(2, '0')}</option>))}
                       </select>
-                      <select
-                        required
-                        value={scheduleForm.scheduled_minute}
-                        onChange={(e) => setScheduleForm({ ...scheduleForm, scheduled_minute: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                      >
+                      <select required value={scheduleForm.scheduled_minute} onChange={(e) => setScheduleForm({ ...scheduleForm, scheduled_minute: e.target.value })} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent">
                         <option value="">MM</option>
-                        {Array.from({ length: 60 }).map((_, m) => (
-                          <option key={m} value={String(m)}>
-                            {String(m).padStart(2, '0')}
-                          </option>
-                        ))}
+                        {Array.from({ length: 60 }).map((_, m) => (<option key={m} value={String(m)}>{String(m).padStart(2, '0')}</option>))}
                       </select>
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Disimpan sebagai <span className="font-mono">TIMESTAMPTZ</span> (contoh: 07:00 GMT+7).
-                    </p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Prioritas
-                  </label>
-                  <select
-                    value={scheduleForm.priority}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, priority: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                  >
-                    <option value="low">Low</option>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Prioritas</label>
+                  <select value={scheduleForm.priority} onChange={(e) => setScheduleForm({ ...scheduleForm, priority: e.target.value })} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent">
+                    <option value="low">Rendah</option>
                     <option value="normal">Normal</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
+                    <option value="high">Tinggi</option>
+                    <option value="urgent">Mendesak</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Judul Tugas *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={scheduleForm.title}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, title: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 placeholder:text-gray-400"
-                    placeholder="Perbaikan komputer ruang meeting"
-                    autoComplete="off"
-                  />
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Judul Tugas *</label>
+                  <input type="text" required value={scheduleForm.title} onChange={(e) => setScheduleForm({ ...scheduleForm, title: e.target.value })} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500" placeholder="Perbaikan komputer ruang meeting" autoComplete="off" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Deskripsi
-                  </label>
-                  <textarea
-                    value={scheduleForm.description}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, description: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 placeholder:text-gray-400 resize-none"
-                    placeholder="Detail tugas yang harus dikerjakan..."
-                    rows="4"
-                    autoComplete="off"
-                  />
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Deskripsi</label>
+                  <textarea value={scheduleForm.description} onChange={(e) => setScheduleForm({ ...scheduleForm, description: e.target.value })} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500 resize-none" placeholder="Detail tugas..." rows="3" autoComplete="off" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Assign ke IT Support * (bisa lebih dari 1)
-                  </label>
-                  <div className="space-y-2 max-h-48 overflow-y-auto bg-gray-700 border border-gray-600 rounded-lg p-3">
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Assign ke IT Support *</label>
+                  <ScrollArea className="max-h-36 bg-gray-950 border border-gray-800 rounded-lg">
+                    <div className="space-y-1 p-2.5">
                     {allITSupport.length === 0 ? (
-                      <p className="text-sm text-gray-300">Tidak ada data IT Support.</p>
+                      <p className="text-xs text-gray-500">Tidak ada data IT Support.</p>
                     ) : (
                       allITSupport.map((its) => (
-                        <label key={its.id} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={scheduleForm.assigned_users.includes(its.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setScheduleForm({ ...scheduleForm, assigned_users: [...scheduleForm.assigned_users, its.id] });
-                              } else {
-                                setScheduleForm({ ...scheduleForm, assigned_users: scheduleForm.assigned_users.filter(id => id !== its.id) });
-                              }
-                            }}
-                            className="w-4 h-4 text-cyan-500 bg-gray-600 border-gray-500 rounded focus:ring-cyan-500"
-                          />
-                          <span className="text-white text-sm">
-                            {its.name} <span className="text-gray-300">({its.email})</span>
-                          </span>
+                        <label key={its.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-900 p-1.5 rounded text-xs">
+                          <input type="checkbox" checked={scheduleForm.assigned_users.includes(its.id)} onChange={(e) => { if (e.target.checked) { setScheduleForm({ ...scheduleForm, assigned_users: [...scheduleForm.assigned_users, its.id] }); } else { setScheduleForm({ ...scheduleForm, assigned_users: scheduleForm.assigned_users.filter(id => id !== its.id) }); } }} className="w-3.5 h-3.5 text-zinc-500 bg-gray-900 border-gray-700 rounded focus:ring-gray-600" />
+                          <span className="text-gray-300">{its.name} <span className="text-gray-500">({its.email})</span></span>
                         </label>
                       ))
                     )}
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Tugas dijadwalkan tidak muncul di daftar tugas IT Support sampai waktu jadwal tiba.
-                  </p>
+                    </div>
+                  </ScrollArea>
+                  <p className="text-[10px] text-gray-600 mt-1">Tugas dijadwalkan muncul setelah waktu jadwal tiba.</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Kategori SKP *
-                  </label>
-                  <select
-                    value={scheduleForm.skp_category_id}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, skp_category_id: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                    required
-                  >
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Kategori SKP *</label>
+                  <select value={scheduleForm.skp_category_id} onChange={(e) => setScheduleForm({ ...scheduleForm, skp_category_id: e.target.value })} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent" required>
                     <option value="">-- Pilih Kategori SKP --</option>
-                    {(skpCategories || []).map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.code} - {cat.name}
-                      </option>
-                    ))}
+                    {(skpCategories || []).map((cat) => (<option key={cat.id} value={cat.id}>{cat.code} - {cat.name}</option>))}
                   </select>
                 </div>
 
-                {/* Optional perangkat */}
                 <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={scheduleForm.relate_perangkat}
-                    onChange={(e) => setScheduleForm({ ...scheduleForm, relate_perangkat: e.target.checked, assigned_perangkat: e.target.checked ? scheduleForm.assigned_perangkat : [] })}
-                    className="w-4 h-4 text-cyan-500 bg-gray-600 border-gray-500 rounded focus:ring-cyan-500"
-                  />
-                  <span className="text-sm text-gray-200">Relasikan perangkat</span>
+                  <input type="checkbox" checked={scheduleForm.relate_perangkat} onChange={(e) => setScheduleForm({ ...scheduleForm, relate_perangkat: e.target.checked, assigned_perangkat: e.target.checked ? scheduleForm.assigned_perangkat : [] })} className="w-3.5 h-3.5 text-zinc-500 bg-gray-950 border-gray-700 rounded focus:ring-gray-600" />
+                  <span className="text-xs text-gray-300">Relasikan perangkat</span>
                 </div>
 
                 {scheduleForm.relate_perangkat && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Pilih Perangkat * (bisa lebih dari 1)
-                    </label>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Pilih Perangkat *</label>
                     <div className="relative mb-2">
-                      <input
-                        type="text"
-                        value={perangkatSearch}
-                        onChange={(e) => setPerangkatSearch(e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 placeholder:text-gray-400"
-                        placeholder="Cari perangkat..."
-                      />
-                      <MagnifyingGlassPlusIcon className="w-5 h-5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                      <input type="text" value={perangkatSearch} onChange={(e) => setPerangkatSearch(e.target.value)} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500" placeholder="Cari perangkat..." />
+                      <MagnifyingGlassPlusIcon className="w-4 h-4 text-gray-500 absolute right-3 top-1/2 -translate-y-1/2" />
                     </div>
-
-                    <div className="space-y-2 max-h-48 overflow-y-auto bg-gray-700 border border-gray-600 rounded-lg p-3">
-                      {perangkatList
-                        .filter(p => {
-                          if (!perangkatSearch) return true;
-                          const q = perangkatSearch.toLowerCase();
-                          return (
-                            (p.id_perangkat || '').toLowerCase().includes(q) ||
-                            (p.nama_perangkat || '').toLowerCase().includes(q)
-                          );
-                        })
-                        .map((perangkat) => (
-                          <label key={perangkat.id} className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={scheduleForm.assigned_perangkat.includes(perangkat.id)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setScheduleForm({ ...scheduleForm, assigned_perangkat: [...scheduleForm.assigned_perangkat, perangkat.id] });
-                                } else {
-                                  setScheduleForm({ ...scheduleForm, assigned_perangkat: scheduleForm.assigned_perangkat.filter(id => id !== perangkat.id) });
-                                }
-                              }}
-                              className="w-4 h-4 text-cyan-500 bg-gray-600 border-gray-500 rounded focus:ring-cyan-500"
-                            />
-                            <span className="text-white text-sm flex-1">
-                              <span className="font-mono font-bold text-yellow-300">{perangkat.id_perangkat}</span>
-                              {perangkat.nama_perangkat && ` - ${perangkat.nama_perangkat}`}
-                            </span>
-                          </label>
-                        ))}
-                    </div>
+                    <ScrollArea className="max-h-36 bg-gray-950 border border-gray-800 rounded-lg">
+                      <div className="space-y-1 p-2.5">
+                      {perangkatList.filter(p => { if (!perangkatSearch) return true; const q = perangkatSearch.toLowerCase(); return (p.id_perangkat || '').toLowerCase().includes(q) || (p.nama_perangkat || '').toLowerCase().includes(q); }).map((perangkat) => (
+                        <label key={perangkat.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-900 p-1.5 rounded text-xs">
+                          <input type="checkbox" checked={scheduleForm.assigned_perangkat.includes(perangkat.id)} onChange={(e) => { if (e.target.checked) { setScheduleForm({ ...scheduleForm, assigned_perangkat: [...scheduleForm.assigned_perangkat, perangkat.id] }); } else { setScheduleForm({ ...scheduleForm, assigned_perangkat: scheduleForm.assigned_perangkat.filter(id => id !== perangkat.id) }); } }} className="w-3.5 h-3.5 text-zinc-500 bg-gray-900 border-gray-700 rounded focus:ring-gray-600" />
+                          <span className="text-gray-300 flex-1"><span className="font-mono font-bold text-yellow-400">{perangkat.id_perangkat}</span>{perangkat.nama_perangkat && ` - ${perangkat.nama_perangkat}`}</span>
+                        </label>
+                      ))}
+                      </div>
+                    </ScrollArea>
                   </div>
                 )}
 
-                <div className="flex gap-3 justify-end pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowScheduleModal(false);
-                      setScheduleForm({
-                        title: '',
-                        description: '',
-                        priority: 'normal',
-                        skp_category_id: '',
-                        assigned_users: [],
-                        scheduled_date: '',
-                        scheduled_hour: '',
-                        scheduled_minute: '',
-                        relate_perangkat: true,
-                        assigned_perangkat: [],
-                      });
-                      setPerangkatSearch('');
-                    }}
-                    className="px-6 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition"
-                  >
+                {/* Footer inside form */}
+                <div className="flex gap-2 justify-center pt-3 border-t border-gray-800">
+                  <button type="button" onClick={() => { setShowScheduleModal(false); setScheduleForm({ title: '', description: '', priority: 'normal', skp_category_id: '', assigned_users: [], scheduled_date: '', scheduled_hour: '', scheduled_minute: '', relate_perangkat: true, assigned_perangkat: [] }); setPerangkatSearch(''); }} className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition">
                     Batal
                   </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="px-6 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Memproses...
-                      </>
-                    ) : (
-                      '⏰ Jadwalkan'
-                    )}
+                  <button type="submit" disabled={submitting} className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-500 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    {submitting ? (<><div className="animate-spin rounded-full h-3 w-3 border-2 border-zinc-500 border-t-zinc-100" />Memproses...</>) : ('Jadwalkan')}
                   </button>
                 </div>
               </form>
+              </ScrollArea>
             </div>
           </div>
         )}
 
         {/* Form Modal */}
         {showAddForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full p-6 my-8 relative max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-start mb-4">
-                <h2 className="text-2xl font-bold text-white">
-                  ➕ Buat Penugasan Baru
-                </h2>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50 overflow-y-auto modal-backdrop-enter"
+            onClick={(e) => { if (e.target === e.currentTarget) { setShowAddForm(false); setForm({ title: '', description: '', priority: 'normal', skp_category_id: '', assigned_users: [], relate_perangkat: true, assigned_perangkat: [] }); } }}
+          >
+            <div className="bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full md:w-[540px] my-4 md:my-8 font-['Open_Sans'] flex flex-col overflow-hidden modal-content-enter max-h-[85vh]">
+              {/* Fixed Header */}
+              <div className="flex-shrink-0 flex justify-between items-start px-4 py-3 bg-black border-b border-gray-800">
+                <span className="font-bold text-white text-sm">Buat Penugasan Baru</span>
                 <button
-                  onClick={() => {
-                    setShowAddForm(false);
-                    setForm({
-                      title: '',
-                      description: '',
-                      priority: 'normal',
-                      skp_category_id: '',
-                      assigned_users: [],
-                      relate_perangkat: true,
-                      assigned_perangkat: [],
-                    });
-                  }}
-                  className="text-gray-400 hover:text-gray-200 text-2xl font-bold leading-none"
+                  onClick={() => { setShowAddForm(false); setForm({ title: '', description: '', priority: 'normal', skp_category_id: '', assigned_users: [], relate_perangkat: true, assigned_perangkat: [] }); }}
+                  className="flex-shrink-0 text-gray-400 hover:text-white transition text-lg font-bold leading-none ml-2"
                 >
                   ×
                 </button>
               </div>
-              <form onSubmit={handleSubmit} className="space-y-4">
+
+              {/* Scrollable Content */}
+              <ScrollArea className="flex-1">
+              <form onSubmit={handleSubmit} className="p-4 space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Judul Tugas *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={form.title}
-                    onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 placeholder:text-gray-400"
-                    placeholder="Perbaikan komputer ruang meeting"
-                    autoComplete="off"
-                  />
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Judul Tugas *</label>
+                  <input type="text" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500" placeholder="Perbaikan komputer ruang meeting" autoComplete="off" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Deskripsi
-                  </label>
-                  <textarea
-                    value={form.description}
-                    onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 placeholder:text-gray-400 resize-none"
-                    placeholder="Detail tugas yang harus dikerjakan..."
-                    rows="4"
-                    autoComplete="off"
-                  />
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Deskripsi</label>
+                  <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500 resize-none" placeholder="Detail tugas..." rows="3" autoComplete="off" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">
-                    Assign ke IT Support * (bisa lebih dari 1)
-                  </label>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Assign ke IT Support *</label>
                   {allITSupport.length === 0 ? (
-                    <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        <span className="text-2xl">⚠️</span>
-                        <div>
-                          <p className="font-semibold text-yellow-900 mb-1">
-                            Tidak ada IT Support yang tersedia
-                          </p>
-                          <p className="text-sm text-yellow-800 mb-2">
-                            Semua petugas sedang mengerjakan tugas aktif.
-                          </p>
-                          <p className="text-sm text-yellow-800">
-                            💡 Anda bisa <strong>Hold Task</strong> ini dan assign nanti ketika ada petugas yang available.
-                          </p>
-                        </div>
-                      </div>
+                    <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-lg p-3">
+                      <p className="text-xs font-semibold text-yellow-400 mb-1">Tidak ada IT Support tersedia</p>
+                      <p className="text-[10px] text-gray-500">Semua petugas sedang aktif. Anda bisa Hold Task ini.</p>
                     </div>
                   ) : (
                     <>
-                      <div className="space-y-2 max-h-48 overflow-y-auto bg-gray-700 border border-gray-600 rounded-lg p-3">
+                      <ScrollArea className="max-h-36 bg-gray-950 border border-gray-800 rounded-lg">
+                        <div className="space-y-1 p-2.5">
                         {allITSupport.map((its) => {
                           const isDisabled = !its.isAvailable;
                           const activeTaskNumbers = its.activeTasks.map(t => t.task_number).join(', ');
-                          
                           return (
-                            <label 
-                              key={its.id} 
-                              className={`flex items-center gap-2 p-2 rounded ${
-                                isDisabled 
-                                  ? 'opacity-60 cursor-not-allowed' 
-                                  : 'cursor-pointer hover:bg-gray-600'
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={form.assigned_users.includes(its.id)}
-                                disabled={isDisabled}
-                                onChange={(e) => {
-                                  if (e.target.checked && !isDisabled) {
-                                    setForm({ 
-                                      ...form, 
-                                      assigned_users: [...form.assigned_users, its.id],
-                                      skp_category_id: form.assigned_users.length === 0 ? '' : form.skp_category_id
-                                    });
-                                  } else if (!isDisabled) {
-                                    setForm({ 
-                                      ...form, 
-                                      assigned_users: form.assigned_users.filter(id => id !== its.id)
-                                    });
-                                  }
-                                }}
-                                className="w-4 h-4 text-cyan-500 bg-gray-600 border-gray-500 rounded focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                              />
-                              <span className={`text-sm flex-1 ${isDisabled ? 'text-gray-400' : 'text-white'}`}>
+                            <label key={its.id} className={`flex items-center gap-2 p-1.5 rounded text-xs ${isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-900'}`}>
+                              <input type="checkbox" checked={form.assigned_users.includes(its.id)} disabled={isDisabled} onChange={(e) => { if (e.target.checked && !isDisabled) { setForm({ ...form, assigned_users: [...form.assigned_users, its.id], skp_category_id: form.assigned_users.length === 0 ? '' : form.skp_category_id }); } else if (!isDisabled) { setForm({ ...form, assigned_users: form.assigned_users.filter(id => id !== its.id) }); } }} className="w-3.5 h-3.5 text-zinc-500 bg-gray-900 border-gray-700 rounded focus:ring-gray-600 disabled:opacity-50 disabled:cursor-not-allowed" />
+                              <span className={`flex-1 ${isDisabled ? 'text-gray-500' : 'text-gray-300'}`}>
                                 {its.name} ({its.email})
-                                {isDisabled && activeTaskNumbers && (
-                                  <span className="ml-2 text-xs text-yellow-400">
-                                    - Sedang mengerjakan: {activeTaskNumbers}
-                                  </span>
-                                )}
-                                {!isDisabled && (
-                                  <span className="ml-2 text-xs text-green-400">- Available</span>
-                                )}
+                                {isDisabled && activeTaskNumbers && <span className="ml-1 text-[10px] text-yellow-400">- aktif: {activeTaskNumbers}</span>}
+                                {!isDisabled && <span className="ml-1 text-[10px] text-green-400">- Available</span>}
                               </span>
                             </label>
                           );
                         })}
-                      </div>
+                        </div>
+                      </ScrollArea>
                       {form.assigned_users.length > 0 && (
-                        <p className="text-xs text-cyan-400 mt-1">
-                          ✅ {form.assigned_users.length} petugas dipilih
-                        </p>
+                        <p className="text-[10px] text-green-400 mt-1">{form.assigned_users.length} petugas dipilih</p>
                       )}
                     </>
                   )}
-                  <p className="text-xs text-gray-400 mt-1">
-                    Semua IT Support ditampilkan. User yang sedang mengerjakan tugas dinonaktifkan dan menampilkan nomor tugas aktif.
-                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Kategori SKP *
-                    </label>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Kategori SKP *</label>
                     {form.assigned_users.length === 0 ? (
-                      // For hold tasks: show all SKP categories when no IT Support is selected
                       skpCategories.length === 0 ? (
-                        <div className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-400 text-sm">
-                          Memuat kategori SKP...
-                        </div>
+                        <div className="w-full px-3 py-2 border border-gray-800 rounded-lg bg-gray-950 text-gray-500 text-xs">Memuat SKP...</div>
                       ) : (
-                        <select
-                          required
-                          value={form.skp_category_id}
-                          onChange={(e) => setForm({ ...form, skp_category_id: e.target.value })}
-                          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                        >
+                        <select required value={form.skp_category_id} onChange={(e) => setForm({ ...form, skp_category_id: e.target.value })} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent">
                           <option value="">-- Pilih SKP --</option>
-                          {skpCategories.map((skp) => (
-                            <option key={skp.id} value={skp.id}>
-                              {skp.name}
-                            </option>
-                          ))}
+                          {skpCategories.map((skp) => (<option key={skp.id} value={skp.id}>{skp.name}</option>))}
                         </select>
                       )
                     ) : filteredSkpCategories.length === 0 ? (
-                      <div className="w-full px-3 py-2 border border-yellow-600 rounded-lg bg-yellow-900/20 text-yellow-300 text-sm">
-                        ⚠️ IT Support ini belum memiliki SKP yang di-assign
-                      </div>
+                      <div className="w-full px-3 py-2 border border-yellow-500/30 rounded-lg bg-yellow-500/5 text-yellow-400 text-xs">IT Support belum punya SKP</div>
                     ) : (
-                      <select
-                        required
-                        value={form.skp_category_id}
-                        onChange={(e) => setForm({ ...form, skp_category_id: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                      >
+                      <select required value={form.skp_category_id} onChange={(e) => setForm({ ...form, skp_category_id: e.target.value })} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent">
                         <option value="">-- Pilih SKP --</option>
-                        {filteredSkpCategories.map((skp) => (
-                          <option key={skp.id} value={skp.id}>
-                            {skp.name}
-                          </option>
-                        ))}
+                        {filteredSkpCategories.map((skp) => (<option key={skp.id} value={skp.id}>{skp.name}</option>))}
                       </select>
-                    )}
-                    {form.assigned_users.length > 0 && filteredSkpCategories.length > 0 && (
-                      <p className="text-xs text-gray-400 mt-1">
-                        Menampilkan SKP yang di-assign ke kategori IT Support ini
-                      </p>
-                    )}
-                    {form.assigned_users.length === 0 && skpCategories.length > 0 && (
-                      <p className="text-xs text-gray-400 mt-1">
-                        💡 Pilih SKP untuk hold task. SKP akan digunakan saat task di-assign nanti.
-                      </p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Prioritas
-                    </label>
-                    <select
-                      value={form.priority}
-                      onChange={(e) => setForm({ ...form, priority: e.target.value })}
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                    >
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Prioritas</label>
+                    <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent">
                       <option value="low">Rendah</option>
                       <option value="normal">Normal</option>
                       <option value="high">Tinggi</option>
@@ -2971,227 +2564,111 @@ const Penugasan = () => {
                   </div>
                 </div>
 
-                {/* NEW: Perangkat Selection */}
                 <div>
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
-                    <input
-                      type="checkbox"
-                      checked={!!form.relate_perangkat}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setForm({
-                          ...form,
-                          relate_perangkat: checked,
-                          assigned_perangkat: checked ? form.assigned_perangkat : [],
-                        });
-                      }}
-                      className="w-4 h-4 text-cyan-500 bg-gray-700 border-gray-500 rounded focus:ring-cyan-500"
-                    />
+                  <label className="flex items-center gap-2 text-xs font-medium text-gray-400 mb-2">
+                    <input type="checkbox" checked={!!form.relate_perangkat} onChange={(e) => { const checked = e.target.checked; setForm({ ...form, relate_perangkat: checked, assigned_perangkat: checked ? form.assigned_perangkat : [] }); }} className="w-3.5 h-3.5 text-zinc-500 bg-gray-950 border-gray-700 rounded focus:ring-gray-600" />
                     Relasi ke Perangkat? (opsional)
                   </label>
-                  {form.relate_perangkat && (
-                    <p className="text-xs text-gray-400 mb-2">
-                      Jika tugas tidak terkait perangkat (mis. rapat/meeting), matikan toggle ini.
-                    </p>
-                  )}
                   {!form.relate_perangkat && (
-                    <div className="bg-gray-700 border border-gray-600 rounded-lg p-3 text-sm text-gray-300">
-                      Perangkat tidak diperlukan untuk tugas ini.
-                    </div>
+                    <div className="bg-gray-950 border border-gray-800 rounded-lg p-2.5 text-xs text-gray-500">Perangkat tidak diperlukan.</div>
                   )}
                 </div>
 
                 {form.relate_perangkat && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Pilih Perangkat {form.relate_perangkat ? '*' : ''} (minimal 1)
-                    </label>
-                  <input
-                    type="text"
-                    placeholder="Cari ID Perangkat..."
-                    value={perangkatSearch}
-                    onChange={(e) => setPerangkatSearch(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 mb-2"
-                  />
-                  <div className="space-y-2 max-h-48 overflow-y-auto bg-gray-700 border border-gray-600 rounded-lg p-3">
-                    {perangkatList
-                      .filter(p => 
-                        p.id_perangkat.toLowerCase().includes(perangkatSearch.toLowerCase()) ||
-                        (p.nama_perangkat && p.nama_perangkat.toLowerCase().includes(perangkatSearch.toLowerCase()))
-                      )
-                      .map((perangkat) => (
-                        <label key={perangkat.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-600 p-2 rounded">
-                          <input
-                            type="checkbox"
-                            checked={form.assigned_perangkat.includes(perangkat.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setForm({ 
-                                  ...form, 
-                                  assigned_perangkat: [...form.assigned_perangkat, perangkat.id]
-                                });
-                              } else {
-                                setForm({ 
-                                  ...form, 
-                                  assigned_perangkat: form.assigned_perangkat.filter(id => id !== perangkat.id)
-                                });
-                              }
-                            }}
-                            className="w-4 h-4 text-cyan-500 bg-gray-600 border-gray-500 rounded focus:ring-cyan-500"
-                          />
-                          <span className="text-white text-sm flex-1">
-                            <span className="font-mono font-bold text-yellow-300">{perangkat.id_perangkat}</span>
+                    <label className="block text-xs font-medium text-gray-400 mb-1">Pilih Perangkat *</label>
+                    <input type="text" placeholder="Cari ID Perangkat..." value={perangkatSearch} onChange={(e) => setPerangkatSearch(e.target.value)} className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500 mb-2" />
+                    <ScrollArea className="max-h-36 bg-gray-950 border border-gray-800 rounded-lg">
+                      <div className="space-y-1 p-2.5">
+                      {perangkatList.filter(p => p.id_perangkat.toLowerCase().includes(perangkatSearch.toLowerCase()) || (p.nama_perangkat && p.nama_perangkat.toLowerCase().includes(perangkatSearch.toLowerCase()))).map((perangkat) => (
+                        <label key={perangkat.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-900 p-1.5 rounded text-xs">
+                          <input type="checkbox" checked={form.assigned_perangkat.includes(perangkat.id)} onChange={(e) => { if (e.target.checked) { setForm({ ...form, assigned_perangkat: [...form.assigned_perangkat, perangkat.id] }); } else { setForm({ ...form, assigned_perangkat: form.assigned_perangkat.filter(id => id !== perangkat.id) }); } }} className="w-3.5 h-3.5 text-zinc-500 bg-gray-900 border-gray-700 rounded focus:ring-gray-600" />
+                          <span className="text-gray-300 flex-1">
+                            <span className="font-mono font-bold text-yellow-400">{perangkat.id_perangkat}</span>
                             {perangkat.nama_perangkat && ` - ${perangkat.nama_perangkat}`}
-                            <span className={`ml-2 text-xs ${perangkat.status_perangkat === 'layak' ? 'text-green-400' : 'text-red-400'}`}>
-                              ({perangkat.status_perangkat})
-                            </span>
+                            <span className={`ml-1 text-[10px] ${perangkat.status_perangkat === 'layak' ? 'text-green-400' : 'text-red-400'}`}>({perangkat.status_perangkat})</span>
                           </span>
                         </label>
                       ))}
+                      </div>
+                    </ScrollArea>
+                    {form.assigned_perangkat.length > 0 && (
+                      <p className="text-[10px] text-green-400 mt-1">{form.assigned_perangkat.length} perangkat dipilih</p>
+                    )}
                   </div>
-                  {form.assigned_perangkat.length > 0 && (
-                    <p className="text-xs text-cyan-400 mt-1">
-                      ✅ {form.assigned_perangkat.length} perangkat dipilih
-                    </p>
-                  )}
-                </div>
                 )}
 
-                <div className="flex gap-3 justify-end pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAddForm(false);
-                      setForm({
-                        title: '',
-                        description: '',
-                        priority: 'normal',
-                        skp_category_id: '',
-                        assigned_users: [],
-                        assigned_perangkat: [],
-                      });
-                      setPerangkatSearch('');
-                    }}
-                    className="px-6 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition"
-                  >
+                {/* Footer inside form */}
+                <div className="flex gap-2 justify-center pt-3 border-t border-gray-800">
+                  <button type="button" onClick={() => { setShowAddForm(false); setForm({ title: '', description: '', priority: 'normal', skp_category_id: '', assigned_users: [], assigned_perangkat: [] }); setPerangkatSearch(''); }} className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition">
                     Batal
                   </button>
-                  
                   {allITSupport.filter(u => u.isAvailable).length === 0 ? (
-                    <button
-                      type="button"
-                      onClick={handleHoldTask}
-                      disabled={submitting}
-                      className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {submitting ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Memproses...
-                        </>
-                      ) : (
-                        '⏳ Hold Task'
-                      )}
+                    <button type="button" onClick={handleHoldTask} disabled={submitting} className="px-3 py-1.5 text-xs bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                      {submitting ? (<><div className="animate-spin rounded-full h-3 w-3 border-2 border-zinc-500 border-t-zinc-100" />Memproses...</>) : ('Hold Task')}
                     </button>
                   ) : (
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                      {submitting ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Memproses...
-                        </>
-                      ) : (
-                        'Buat Tugas'
-                      )}
+                    <button type="submit" disabled={submitting} className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-500 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                      {submitting ? (<><div className="animate-spin rounded-full h-3 w-3 border-2 border-zinc-500 border-t-zinc-100" />Memproses...</>) : ('Buat Tugas')}
                     </button>
                   )}
                 </div>
               </form>
+              </ScrollArea>
             </div>
           </div>
         )}
 
         {/* Assign Held Task Modal */}
         {showAssignModal && selectedHeldTask && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-xl max-w-md w-full p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h2 className="text-2xl font-bold text-gray-100">
-                  Assign Tugas ke IT Support
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowAssignModal(false);
-                    setSelectedHeldTask(null);
-                  }}
-                  className="text-gray-400 hover:text-gray-200 text-2xl font-bold leading-none"
-                >
-                  ×
-                </button>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 modal-backdrop-enter"
+            onClick={(e) => { if (e.target === e.currentTarget) { setShowAssignModal(false); setSelectedHeldTask(null); } }}
+          >
+            <div className="bg-black rounded-xl shadow-2xl shadow-black/50 border border-gray-800 w-full md:w-[420px] font-['Open_Sans'] flex flex-col overflow-hidden modal-content-enter">
+              {/* Fixed Header */}
+              <div className="flex-shrink-0 flex justify-between items-start px-4 py-3 bg-black border-b border-gray-800">
+                <span className="font-bold text-white text-sm">Assign Tugas</span>
+                <button onClick={() => { setShowAssignModal(false); setSelectedHeldTask(null); }} className="flex-shrink-0 text-gray-400 hover:text-white transition text-lg font-bold leading-none ml-2">×</button>
               </div>
-              
-              <div className="bg-gray-700 border border-gray-600 rounded-lg p-4 mb-4">
-                <p className="text-sm font-mono font-bold text-cyan-400">{selectedHeldTask.task_number}</p>
-                <p className="text-lg font-semibold text-gray-100 mt-1">{selectedHeldTask.title}</p>
-                <div className="mt-2 text-sm text-gray-300">
-                  <p>⏱️ Waiting: {formatWaitingDuration(waitingTime[selectedHeldTask.id] || 0)}</p>
-                  <p>🎯 {selectedHeldTask.skp_name}</p>
-                  <p>⚡ {getPriorityBadge(selectedHeldTask.priority)}</p>
+
+              {/* Content */}
+              <div className="p-4 space-y-3">
+                <div className="bg-gray-950 border border-gray-800 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-mono font-bold text-white">{selectedHeldTask.task_number}</span>
+                    {getPriorityBadge(selectedHeldTask.priority)}
+                  </div>
+                  <p className="text-xs font-semibold text-white mb-1.5">{selectedHeldTask.title}</p>
+                  <div className="flex flex-wrap gap-2 text-[10px] text-gray-500">
+                    <span className="inline-flex items-center gap-1"><ClockIcon className="w-3 h-3" />{formatWaitingDuration(waitingTime[selectedHeldTask.id] || 0)}</span>
+                    <span className="inline-flex items-center gap-1"><TagIcon className="w-3 h-3" />{selectedHeldTask.skp_name}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1">Pilih IT Support *</label>
+                  {allITSupport.length === 0 ? (
+                    <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-2.5 text-xs text-red-400">
+                      Tidak ada IT Support tersedia.
+                    </div>
+                  ) : (
+                    <select id="assign-it-support" className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent" defaultValue="">
+                      <option value="">-- Pilih IT Support --</option>
+                      {allITSupport.map((its) => {
+                        const isDisabled = !its.isAvailable;
+                        const activeTaskNumbers = its.activeTasks.map(t => t.task_number).join(', ');
+                        const label = isDisabled ? `${its.name} - aktif: ${activeTaskNumbers}` : `${its.name} - Available`;
+                        return (<option key={its.id} value={its.id} disabled={isDisabled} style={{ color: isDisabled ? '#6b7280' : '#f3f4f6' }}>{label}</option>);
+                      })}
+                    </select>
+                  )}
                 </div>
               </div>
 
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Pilih IT Support *
-                </label>
-                {allITSupport.length === 0 ? (
-                  <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-3 text-sm text-red-400">
-                    ⚠️ Tidak ada IT Support yang tersedia. Tunggu hingga ada yang selesai.
-                  </div>
-                ) : (
-                  <select
-                    id="assign-it-support"
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                    defaultValue=""
-                  >
-                    <option value="">-- Pilih IT Support --</option>
-                    {allITSupport.map((its) => {
-                      const isDisabled = !its.isAvailable;
-                      const activeTaskNumbers = its.activeTasks.map(t => t.task_number).join(', ');
-                      const label = isDisabled 
-                        ? `${its.name} (${its.email}) - Sedang mengerjakan: ${activeTaskNumbers}`
-                        : `${its.name} (${its.email}) - Available`;
-                      
-                      return (
-                        <option 
-                          key={its.id} 
-                          value={its.id}
-                          disabled={isDisabled}
-                          style={{ color: isDisabled ? '#6b7280' : '#f3f4f6' }}
-                        >
-                          {label}
-                        </option>
-                      );
-                    })}
-                  </select>
-                )}
-                <p className="text-xs text-gray-400 mt-1">
-                  💡 Semua IT Support ditampilkan. User yang sedang mengerjakan tugas dinonaktifkan dan menampilkan nomor tugas aktif.
-                </p>
-              </div>
-
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => {
-                    setShowAssignModal(false);
-                    setSelectedHeldTask(null);
-                  }}
-                  className="px-6 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition"
-                >
+              {/* Fixed Footer */}
+              <div className="flex-shrink-0 p-3 border-t border-gray-800 flex justify-center items-center gap-2 bg-black">
+                <button onClick={() => { setShowAssignModal(false); setSelectedHeldTask(null); }} className="px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition">
                   Batal
                 </button>
                 <button
@@ -3199,19 +2676,14 @@ const Penugasan = () => {
                     const select = document.getElementById('assign-it-support');
                     if (select && select.value) {
                       const selectedUser = allITSupport.find(u => u.id === select.value);
-                      if (selectedUser && !selectedUser.isAvailable) {
-                        toast.warning('IT Support ini sedang mengerjakan tugas lain');
-                        return;
-                      }
+                      if (selectedUser && !selectedUser.isAvailable) { toast.warning('IT Support ini sedang aktif'); return; }
                       handleSubmitAssignment(select.value);
-                    } else {
-                      toast.warning('Silakan pilih IT Support');
-                    }
+                    } else { toast.warning('Silakan pilih IT Support'); }
                   }}
                   disabled={allITSupport.filter(u => u.isAvailable).length === 0}
-                  className="px-6 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition disabled:opacity-50"
+                  className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-500 text-white rounded-lg transition disabled:opacity-50"
                 >
-                  ✅ Assign Sekarang
+                  Assign
                 </button>
               </div>
             </div>
@@ -3220,56 +2692,40 @@ const Penugasan = () => {
 
         {/* Held Tasks Section */}
         {heldTasks.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-100 flex items-center gap-2">
-                ⏳ Held Tasks
-                <span className="text-xs bg-gray-700 text-cyan-400 px-2 py-0.5 rounded-full border border-gray-600">
-                  {heldTasks.length}
-                </span>
-              </h2>
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs font-semibold text-white">Held Tasks</span>
+              <span className="text-[10px] bg-zinc-800 text-zinc-300 px-1.5 py-0.5 rounded-full">{heldTasks.length}</span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-2">
               {heldTasks.map((task) => {
                 const currentWait = waitingTime[task.id] || Math.floor(task.current_waiting_minutes);
                 const isOverOneHour = currentWait > 60;
                 
                 return (
-                  <div key={task.id} className={`rounded-lg p-3 border relative ${
-                    isOverOneHour 
-                      ? 'bg-gray-800 border-red-500/50' 
-                      : 'bg-gray-800 border-gray-700'
+                  <div key={task.id} className={`bg-black rounded-lg px-2.5 pt-2.5 pb-2 border relative hover:border-gray-700 transition ${
+                    isOverOneHour ? 'border-red-500/30' : 'border-[#1a1a1a]'
                   }`}>
                     <button 
                       onClick={() => handleAssignHeldTask(task)}
-                      className="absolute top-2 right-2 w-6 h-6 text-white hover:text-cyan-400 flex items-center justify-center text-lg transition"
+                      className="absolute top-2 right-2 w-5 h-5 text-gray-500 hover:text-white flex items-center justify-center text-xs transition"
                       title="Assign ke IT Support"
                     >
-                      ➕
+                      +
                     </button>
-                    <div className="flex items-start justify-between mb-2 pr-8">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                          <span className="font-mono text-base font-bold text-cyan-400">{task.task_number}</span>
-                          {getStatusBadge('on_hold')}
-                          {isOverOneHour && (
-                            <span className="text-xs text-red-400 font-semibold">⚠️</span>
-                          )}
-                        </div>
-                        <h3 className="text-sm font-semibold text-gray-100 mb-1.5 line-clamp-2">{task.title}</h3>
-                        <div className="text-xs text-gray-400 space-y-0.5">
-                          <div>{task.skp_name}</div>
-                          <div className="flex items-center gap-1.5">
-                            <span>{task.assigned_by_name}</span>
-                            <span>•</span>
-                            <span className={`font-medium ${
-                              isOverOneHour ? 'text-red-400' : 'text-cyan-400'
-                            }`}>
-                              {formatWaitingDuration(currentWait)}
-                            </span>
-                          </div>
-                        </div>
+                    <div className="pr-6">
+                      <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        <span className="font-mono text-xs font-bold text-white">{task.task_number}</span>
+                        {getStatusBadge('on_hold')}
+                      </div>
+                      <p className="text-xs font-semibold text-white mb-1 line-clamp-2">{task.title}</p>
+                      <div className="flex flex-wrap gap-2 text-[10px] text-gray-500">
+                        <span className="inline-flex items-center gap-1"><TagIcon className="w-2.5 h-2.5" />{task.skp_name}</span>
+                        <span className="inline-flex items-center gap-1"><UserIcon className="w-2.5 h-2.5" />{task.assigned_by_name}</span>
+                        <span className={`inline-flex items-center gap-1 font-medium ${isOverOneHour ? 'text-red-400' : 'text-gray-400'}`}>
+                          <ClockIcon className="w-2.5 h-2.5" />{formatWaitingDuration(currentWait)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -3281,196 +2737,128 @@ const Penugasan = () => {
 
 
         {/* Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4">
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-2 md:p-4">
-            <p className="text-xs md:text-sm text-gray-400">Held Tasks</p>
-            <p className="text-xl md:text-2xl font-bold text-cyan-400">{heldTasks.length}</p>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <div className="bg-black border border-[#1a1a1a] rounded-lg p-2.5">
+            <p className="text-[10px] text-gray-500">Held</p>
+            <p className="text-lg font-bold text-zinc-100 tabular-nums">{heldTasks.length}</p>
             {heldTasks.filter(t => (waitingTime[t.id] || 0) > 60).length > 0 && (
-              <p className="text-xs mt-0.5 md:mt-1 text-red-400">⚠️ {heldTasks.filter(t => (waitingTime[t.id] || 0) > 60).length} &gt; 1 jam</p>
+              <p className="text-[10px] text-red-400">{heldTasks.filter(t => (waitingTime[t.id] || 0) > 60).length} &gt; 1 jam</p>
             )}
           </div>
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-2 md:p-4">
-            <p className="text-xs md:text-sm text-gray-400">Total Tugas</p>
-            <p className="text-xl md:text-2xl font-bold text-gray-100">{tasks.length}</p>
+          <div className="bg-black border border-[#1a1a1a] rounded-lg p-2.5">
+            <p className="text-[10px] text-gray-500">Total</p>
+            <p className="text-lg font-bold text-zinc-100 tabular-nums">{tasks.length}</p>
           </div>
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-2 md:p-4">
-            <p className="text-xs md:text-sm text-gray-400">Sedang Dikerjakan</p>
-            <p className="text-xl md:text-2xl font-bold text-purple-400">
+          <div className="bg-black border border-[#1a1a1a] rounded-lg p-2.5">
+            <p className="text-[10px] text-gray-500">Dikerjakan</p>
+            <p className="text-lg font-bold text-purple-400 tabular-nums">
               {tasks.filter(t => ['in_progress', 'paused'].includes(t.status)).length}
             </p>
           </div>
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-2 md:p-4">
-            <p className="text-xs md:text-sm text-gray-400">Selesai</p>
-            <p className="text-xl md:text-2xl font-bold text-green-400">
+          <div className="bg-black border border-[#1a1a1a] rounded-lg p-2.5">
+            <p className="text-[10px] text-gray-500">Selesai</p>
+            <p className="text-lg font-bold text-green-400 tabular-nums">
               {tasks.filter(t => t.status === 'completed').length}
             </p>
           </div>
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-2 md:p-4">
-            <p className="text-xs md:text-sm text-gray-400">Menunggu</p>
-            <p className="text-xl md:text-2xl font-bold text-yellow-400">
+          <div className="bg-black border border-[#1a1a1a] rounded-lg p-2.5">
+            <p className="text-[10px] text-gray-500">Menunggu</p>
+            <p className="text-lg font-bold text-yellow-400 tabular-nums">
               {tasks.filter(t => t.status === 'pending').length}
             </p>
           </div>
         </div>
 
         {/* Table */}
-        <div className="bg-gray-800 rounded-xl shadow-md overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-700">
-              <thead className="bg-gray-700">
+        <div className="bg-black border border-[#1a1a1a] rounded-lg overflow-hidden">
+          <ScrollArea className="w-full">
+            <table className="min-w-full divide-y divide-[#1a1a1a]">
+              <thead className="bg-zinc-900/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    No. Tugas
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Judul & SKP
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider min-w-[150px] whitespace-nowrap">
-                    👤 Petugas IT Support
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Perangkat Ditugaskan
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Prioritas
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Dibuat
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Selesai
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Durasi
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Aksi
-                  </th>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">No. Tugas</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">Judul & SKP</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">Petugas</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">Perangkat</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">Prioritas</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">Dibuat</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">Selesai</th>
+                  <th className="px-3 py-2 text-left text-[10px] font-medium text-gray-500 uppercase tracking-wider">Durasi</th>
+                  <th className="px-3 py-2 text-right text-[10px] font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="bg-gray-800 divide-y divide-gray-700">
+              <tbody className="divide-y divide-[#1a1a1a]">
                 {tasks.map((task) => (
-                  <tr key={task.id} className="hover:bg-gray-700 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  <tr key={task.id} className="hover:bg-zinc-900/30 transition-colors">
+                    <td className="px-3 py-2.5 whitespace-nowrap">
                       <button
                         onClick={() => handleViewDetail(task)}
-                        className="text-sm font-mono font-bold text-orange-400 hover:text-orange-300 hover:underline cursor-pointer"
+                        className="text-xs font-mono font-bold text-white hover:text-gray-300 hover:underline cursor-pointer"
                         title="Klik untuk lihat detail"
                       >
                         {task.task_number}
                       </button>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 py-2.5">
                       <div>
-                        <p className="text-sm font-semibold text-white">{task.title}</p>
-                        <p className="text-xs text-gray-400">
-                          {task.skp_category?.name}
-                        </p>
+                        <p className="text-xs font-semibold text-white truncate max-w-[200px]">{task.title}</p>
+                        <p className="text-[10px] text-gray-500">{task.skp_category?.name}</p>
                       </div>
                     </td>
-                    <td className="px-6 py-4 min-w-[150px]">
+                    <td className="px-3 py-2.5 min-w-[120px]">
                       {task.assigned_users && task.assigned_users.length > 0 ? (
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                           {task.assigned_users.map((au, idx) => {
-                            // Direct access to profiles.full_name
-                            const userName = au.profiles?.full_name || 
-                                          au.profiles?.email || 
-                                          (au.user_id ? `User ${au.user_id.substring(0, 8)}...` : 'Unknown');
-                            
+                            const userName = au.profiles?.full_name || au.profiles?.email || (au.user_id ? `User ${au.user_id.substring(0, 8)}...` : 'Unknown');
                             return (
-                              <p key={idx} className="text-sm font-medium text-white" title={au.user_id || ''}>
-                                {userName || 'FALLBACK_TEXT'}
-                              </p>
+                              <p key={idx} className="text-xs text-gray-300 truncate" title={au.user_id || ''}>{userName}</p>
                             );
                           })}
                         </div>
                       ) : (
-                        <span className="text-sm text-gray-400">-</span>
+                        <span className="text-xs text-gray-600">-</span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 py-2.5">
                       {task.assigned_devices && task.assigned_devices.length > 0 ? (
-                        <div className="space-y-1">
+                        <div className="space-y-0.5">
                           {task.assigned_devices.map((ad, idx) => {
-                            const perangkatId =
-                              ad.perangkat?.id_perangkat ||
-                              (ad.perangkat && typeof ad.perangkat === 'object' && ad.perangkat.id_perangkat) ||
-                              '-';
-                            const perangkatName =
-                              ad.perangkat?.nama_perangkat ||
-                              (ad.perangkat && typeof ad.perangkat === 'object' && ad.perangkat.nama_perangkat) ||
-                              '';
-
+                            const perangkatId = ad.perangkat?.id_perangkat || (ad.perangkat && typeof ad.perangkat === 'object' && ad.perangkat.id_perangkat) || '-';
+                            const perangkatName = ad.perangkat?.nama_perangkat || (ad.perangkat && typeof ad.perangkat === 'object' && ad.perangkat.nama_perangkat) || '';
                             return (
-                              <p
-                                key={idx}
-                                className="text-xs font-mono font-semibold text-yellow-300 truncate"
-                                title={perangkatName ? `${perangkatId} - ${perangkatName}` : perangkatId}
-                              >
-                                {perangkatId}
-                              </p>
+                              <p key={idx} className="text-[10px] font-mono font-semibold text-yellow-400 truncate" title={perangkatName ? `${perangkatId} - ${perangkatName}` : perangkatId}>{perangkatId}</p>
                             );
                           })}
                         </div>
                       ) : (
-                        <span className="text-sm text-gray-400">-</span>
+                        <span className="text-xs text-gray-600">-</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getPriorityBadge(task.priority)}
+                    <td className="px-3 py-2.5 whitespace-nowrap">{getPriorityBadge(task.priority)}</td>
+                    <td className="px-3 py-2.5 whitespace-nowrap">{getStatusBadge(task.status)}</td>
+                    <td className="px-3 py-2.5 whitespace-nowrap text-xs text-gray-500">{formatDate(task.created_at)}</td>
+                    <td className="px-3 py-2.5 whitespace-nowrap text-xs text-gray-500">
+                      {task.completed_at ? (<span className="text-green-400">{formatDate(task.completed_at)}</span>) : '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(task.status)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {formatDate(task.created_at)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      {task.completed_at ? (
-                        <span className="text-green-400">
-                          {formatDate(task.completed_at)}
-                        </span>
-                      ) : (
-                        '-'
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                    <td className="px-3 py-2.5 whitespace-nowrap text-xs text-gray-500">
                       {task.status === 'completed' ? (
                         <span className="font-semibold text-green-400">
                           {(() => {
-                            // Use stored duration if available, otherwise calculate from timestamps
-                            if (task.total_duration_minutes && task.total_duration_minutes > 0) {
-                              return formatDuration(task.total_duration_minutes);
-                            } else if (task.assigned_at && task.completed_at) {
-                              const calculated = calculateDuration(task.assigned_at, task.completed_at);
-                              return calculated && calculated > 0 ? formatDuration(calculated) : '0 menit';
-                            }
+                            if (task.total_duration_minutes && task.total_duration_minutes > 0) return formatDuration(task.total_duration_minutes);
+                            if (task.assigned_at && task.completed_at) { const c = calculateDuration(task.assigned_at, task.completed_at); return c && c > 0 ? formatDuration(c) : '0 menit'; }
                             return '0 menit';
                           })()}
                         </span>
-                      ) : (
-                        '-'
-                      )}
+                      ) : '-'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex gap-2 justify-end">
-                        <button
-                          onClick={() => handleViewDetail(task)}
-                          className="text-blue-400 hover:text-blue-300 text-lg"
-                          title="Lihat detail"
-                        >
-                          <MagnifyingGlassPlusIcon className="w-5 h-5" />
+                    <td className="px-3 py-2.5 whitespace-nowrap text-right">
+                      <div className="flex gap-1.5 justify-end">
+                        <button onClick={() => handleViewDetail(task)} className="text-gray-500 hover:text-white transition" title="Lihat detail">
+                          <MagnifyingGlassPlusIcon className="w-4 h-4" />
                         </button>
                         {task.status === 'pending' && permissions.canDelete && (
-                          <button
-                            onClick={() => handleDeleteClick(task)}
-                            className="text-red-400 hover:text-red-300 text-lg"
-                            title="Hapus tugas"
-                          >
-                            🗑️
+                          <button onClick={() => handleDeleteClick(task)} className="text-gray-500 hover:text-red-400 transition text-xs" title="Hapus tugas">
+                            ×
                           </button>
                         )}
                       </div>
@@ -3479,12 +2867,13 @@ const Penugasan = () => {
                 ))}
               </tbody>
             </table>
-          </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
 
           {tasks.length === 0 && (
-            <div className="text-center py-12 text-gray-400">
-              <p className="text-lg">Belum ada tugas yang dibuat</p>
-              <p className="text-sm mt-2">Klik tombol "Buat Tugas Baru" untuk memulai</p>
+            <div className="bg-gray-950 border-t border-[#1a1a1a] p-8 text-center">
+              <p className="text-xs text-gray-500">Belum ada tugas yang dibuat</p>
+              <p className="text-[10px] text-gray-600 mt-1">Klik "Buat Tugas" untuk memulai</p>
             </div>
           )}
         </div>

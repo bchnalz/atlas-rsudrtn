@@ -2,14 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
+import { toast } from '@/hooks/use-toast';
 import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
 import { TagIcon, UserIcon, ClockIcon, CheckCircleIcon, CalendarIcon, PlayIcon, PauseIcon, HandThumbUpIcon } from '@heroicons/react/16/solid';
 
 const DaftarTugas = () => {
   const { user } = useAuth();
-  const toast = useToast();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -184,7 +183,7 @@ const DaftarTugas = () => {
       setTasks(tasksWithUserData);
     } catch (error) {
       console.error('[DaftarTugas] Error fetching tasks:', error.message);
-      toast.error('❌ Gagal memuat tugas: ' + error.message);
+      toast({ title: 'Gagal memuat tugas: ' + error.message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -248,10 +247,10 @@ const DaftarTugas = () => {
 
       if (logError) throw logError;
 
-      toast.success('✅ Tugas berhasil dikonfirmasi!');
+      toast({ title: 'Tugas berhasil dikonfirmasi!', variant: 'success' });
       fetchTasks();
     } catch (error) {
-      toast.error('❌ Gagal konfirmasi tugas: ' + error.message);
+      toast({ title: 'Gagal konfirmasi tugas: ' + error.message, variant: 'destructive' });
     }
   };
 
@@ -282,10 +281,10 @@ const DaftarTugas = () => {
 
       if (logError) throw logError;
 
-      toast.success(task.started_at ? '▶️ Tugas dilanjutkan!' : '🚀 Tugas dimulai!');
+      toast({ title: task.started_at ? 'Tugas dilanjutkan!' : 'Tugas dimulai!', variant: 'success' });
       fetchTasks();
     } catch (error) {
-      toast.error('❌ Gagal memulai tugas: ' + error.message);
+      toast({ title: 'Gagal memulai tugas: ' + error.message, variant: 'destructive' });
     }
   };
 
@@ -321,10 +320,10 @@ const DaftarTugas = () => {
       if (logError) throw logError;
 
       stopTimer(task.id);
-      toast.info('⏸️ Tugas di-pause!');
+      toast({ title: 'Tugas di-pause!', variant: 'info' });
       fetchTasks();
     } catch (error) {
-      toast.error('❌ Gagal pause tugas: ' + error.message);
+      toast({ title: 'Gagal pause tugas: ' + error.message, variant: 'destructive' });
     }
   };
 
@@ -376,14 +375,14 @@ const DaftarTugas = () => {
       if (logError) throw logError;
 
       stopTimer(selectedTask.id);
-      toast.success('🎉 Tugas selesai!');
+      toast({ title: 'Tugas selesai!', variant: 'success' });
       setShowCompleteModal(false);
       setSelectedTask(null);
       setCompletionNotes('');
       // Refresh to show updated status (trigger will update task_assignments.status)
       fetchTasks();
     } catch (error) {
-      toast.error('❌ Gagal menyelesaikan tugas: ' + error.message);
+      toast({ title: 'Gagal menyelesaikan tugas: ' + error.message, variant: 'destructive' });
     }
   };
 
@@ -414,7 +413,7 @@ const DaftarTugas = () => {
       });
       setShowDetailModal(true);
     } catch (error) {
-      toast.error('❌ Gagal memuat detail: ' + error.message);
+      toast({ title: 'Gagal memuat detail: ' + error.message, variant: 'destructive' });
     }
   };
 
@@ -522,7 +521,7 @@ const DaftarTugas = () => {
 
   if (loading) {
     return (
-      <Layout hideTopBar>
+      <Layout>
         <div className="space-y-3 text-[11px]" style={{ fontFamily: "'Open Sans', sans-serif" }}>
           {/* Tabs Skeleton */}
           <div className="flex justify-center py-1">
@@ -574,7 +573,7 @@ const DaftarTugas = () => {
   }
 
   return (
-    <Layout hideTopBar>
+    <Layout>
       <div className="space-y-3 text-[11px]" style={{ fontFamily: "'Open Sans', sans-serif" }}>
         {/* Detail Modal */}
         {showDetailModal && selectedTask && (
@@ -796,7 +795,7 @@ const DaftarTugas = () => {
                   <textarea
                     value={completionNotes}
                     onChange={(e) => setCompletionNotes(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
+                    className="w-full px-3 py-2 text-[10px] bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
                     placeholder="Hasil pekerjaan, catatan tambahan..."
                     rows="4"
                   />
