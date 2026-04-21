@@ -297,3 +297,44 @@
 .modal-content-exit {
   animation: modal-exit 0.15s ease-in forwards;
 }
+
+/* Dashboard: Progress SKP yellow fill — pulse/glow (plain CSS, always bundled) */
+@keyframes skp-progress-bar-fill-bright {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.38);
+  }
+}
+
+.skp-progress-bar-fill-pulse {
+  animation: skp-progress-bar-fill-bright 1.8s ease-in-out infinite;
+}
+
+@keyframes skp-progress-bar-glow-overlay {
+  0%,
+  100% {
+    opacity: 0.18;
+  }
+  50% {
+    opacity: 0.88;
+  }
+}
+
+.skp-progress-bar-glow-overlay {
+  animation: skp-progress-bar-glow-overlay 1.8s ease-in-out infinite;
+  mix-blend-mode: overlay;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skp-progress-bar-fill-pulse,
+  .skp-progress-bar-glow-overlay {
+    animation: none !important;
+  }
+
+  .skp-progress-bar-glow-overlay {
+    opacity: 0.35;
+  }
+}

@@ -12,7 +12,7 @@ import {
 } from '../components/ui/carousel';
 import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { ClipboardDocumentIcon } from '@heroicons/react/24/outline';
-import { CheckBadgeIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+import { BoltIcon, CheckBadgeIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 
 const Dashboard = () => {
   const { user, profile } = useAuth();
@@ -507,14 +507,41 @@ const Dashboard = () => {
                               {skp.completed_count}/{skp.target_count}
                             </span>
                           </div>
-                          <div className="h-1.5 w-full rounded-full bg-zinc-900 overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all duration-700 ease-out"
-                              style={{
-                                width: animated ? `${skp.percentage}%` : '0%',
-                                backgroundColor: '#ffffff',
-                              }}
-                            />
+                          <div className="relative px-1 py-1 overflow-visible">
+                            <div className="relative h-1.5 w-full overflow-visible">
+                              <div className="absolute inset-0 rounded-full bg-zinc-900" />
+                              <div
+                                className="absolute left-0 top-0 z-[1] h-full overflow-hidden rounded-full transition-[width] duration-700 ease-out"
+                                style={{ width: animated ? `${skp.percentage}%` : '0%' }}
+                              >
+                                <div
+                                  className={`h-full w-full rounded-full bg-[#ffb700]${
+                                    animated && skp.percentage > 0 ? ' skp-progress-bar-fill-pulse' : ''
+                                  }`}
+                                />
+                                {animated && skp.percentage > 0 ? (
+                                  <div
+                                    className="skp-progress-bar-glow-overlay pointer-events-none absolute inset-0 rounded-full bg-gradient-to-b from-white via-white/25 to-transparent"
+                                    aria-hidden
+                                  />
+                                ) : null}
+                              </div>
+                              <div
+                                className="pointer-events-none absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 transition-all duration-700 ease-out"
+                                style={{ left: animated ? `${skp.percentage}%` : '0%' }}
+                                aria-hidden
+                              >
+                                {animated && skp.percentage > 0 ? (
+                                  <BoltIcon
+                                  className="h-4 w-4 text-white"
+                                  style={{
+                                    filter:
+                                      'drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000) drop-shadow(1px 1px 0 #000) drop-shadow(-1px 1px 0 #000) drop-shadow(1px -1px 0 #000) drop-shadow(-1px -1px 0 #000)',
+                                  }}
+                                />
+                                ) : null}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ))}

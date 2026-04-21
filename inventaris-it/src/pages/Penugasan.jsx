@@ -3,6 +3,7 @@ import { MagnifyingGlassPlusIcon } from '@heroicons/react/24/outline';
 import { TagIcon, UserIcon, ClockIcon, CheckCircleIcon, CalendarIcon } from '@heroicons/react/16/solid';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
+import { Badge } from '../components/ui/badge';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { getPagePermissions } from '../lib/pagePermissions';
@@ -1074,7 +1075,7 @@ const Penugasan = () => {
       completed: 'border-green-500/30 bg-green-500/10 text-green-400',
       cancelled: 'border-zinc-500/30 bg-zinc-500/10 text-zinc-400',
     };
-    
+
     const labels = {
       scheduled: 'Dijadwalkan',
       on_hold: 'On Hold',
@@ -1123,7 +1124,7 @@ const Penugasan = () => {
       high: 'border-orange-500/30 bg-orange-500/10 text-orange-400',
       urgent: 'border-red-500/30 bg-red-500/10 text-red-400',
     };
-    
+
     const labels = {
       low: 'Rendah',
       normal: 'Normal',
@@ -1167,6 +1168,12 @@ const Penugasan = () => {
   };
 
   const canEditAnyTask = profile?.role === 'administrator' || userCategory === 'Helpdesk';
+  const hDesk = userCategory === 'Helpdesk';
+
+  const hdBtn =
+    'text-xs py-1.5 px-3 rounded-sm bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 transition duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950';
+  const hdBtnPrimary =
+    'text-xs py-1.5 px-3 rounded-sm bg-zinc-700 hover:bg-zinc-600 text-white transition duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/40 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950';
 
   const handleOpenEdit = (task) => {
     if (!task) return;
@@ -1553,6 +1560,49 @@ const Penugasan = () => {
   };
 
   if (loading) {
+    if (hDesk) {
+      return (
+        <Layout hideTopBar>
+          <div className="space-y-3 text-[11px]" style={{ fontFamily: "'Open Sans', sans-serif" }}>
+            <div className="flex justify-end py-1">
+              <div className="flex gap-1 border border-zinc-800 rounded-sm p-0.5">
+                <div className="h-7 w-20 bg-zinc-800 rounded-sm animate-pulse" />
+                <div className="h-7 w-24 bg-[#1a1a1a] rounded-sm animate-pulse" />
+                <div className="h-7 w-28 bg-[#1a1a1a] rounded-sm animate-pulse" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="bg-black border border-[#1a1a1a] rounded-lg px-2.5 py-2.5">
+                  <div className="h-2.5 w-16 bg-[#1a1a1a] rounded animate-pulse mb-2" />
+                  <div className="h-6 w-12 bg-zinc-800 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+            <div className="space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-black border border-[#1a1a1a] rounded-lg px-2.5 pt-2.5 pb-2"
+                >
+                  <div className="flex flex-col lg:flex-row gap-2.5 justify-between">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex gap-2">
+                        <div className="h-3 w-20 bg-[#1a1a1a] rounded animate-pulse" />
+                        <div className="h-4 w-14 bg-[#1a1a1a] rounded-full animate-pulse" />
+                      </div>
+                      <div className="h-3 bg-[#1a1a1a] rounded animate-pulse" style={{ width: `${60 + i * 10}%` }} />
+                      <div className="h-2.5 w-40 bg-[#1a1a1a] rounded animate-pulse" />
+                    </div>
+                    <div className="h-7 w-24 bg-[#1a1a1a] rounded-lg animate-pulse self-start" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Layout>
+      );
+    }
     return (
       <Layout>
         <div className="space-y-3 text-[11px]" style={{ fontFamily: "'Open Sans', sans-serif" }}>
@@ -2167,7 +2217,6 @@ const Penugasan = () => {
                   ×
                 </button>
               </div>
-
               {/* Content */}
               <div className="p-4 space-y-3">
                 <div>
@@ -2241,6 +2290,7 @@ const Penugasan = () => {
                   Batal
                 </button>
                 <button
+                  type="button"
                   onClick={handleExport}
                   disabled={exporting || (exportType === 'month' && (!exportMonth || !exportYear)) || (exportType === 'daterange' && (!exportStartDate || !exportEndDate))}
                   className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-500 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -2276,7 +2326,6 @@ const Penugasan = () => {
                   ×
                 </button>
               </div>
-
               {/* Content */}
               <div className="p-4 space-y-3">
                 <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3">
@@ -2325,6 +2374,7 @@ const Penugasan = () => {
                   Batal
                 </button>
                 <button
+                  type="button"
                   onClick={handleDeleteConfirm}
                   disabled={!deletionReason.trim()}
                   className="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-500 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
@@ -2672,6 +2722,7 @@ const Penugasan = () => {
                   Batal
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     const select = document.getElementById('assign-it-support');
                     if (select && select.value) {
