@@ -7,7 +7,6 @@ import { Badge } from '../components/ui/badge';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { getPagePermissions } from '../lib/pagePermissions';
-import { Badge } from '../components/ui/badge';
 import { ScrollArea, ScrollBar } from '../components/ui/scroll-area';
 
 const Penugasan = () => {
