@@ -11,6 +11,14 @@ import {
   DrawerContent,
 } from '../components/ui/drawer';
 import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '../components/ui/dialog';
+import {
   Carousel,
   CarouselContent,
   CarouselItem,
@@ -413,35 +421,25 @@ const Login = () => {
         style={{ boxShadow: '0 -20px 40px 10px rgba(0, 0, 0, 0.8)' }}
       >
         <div className="container mx-auto flex items-center justify-center">
-          <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-            <DrawerTrigger asChild>
-              <Button className="bg-zinc-100 text-zinc-900 hover:bg-zinc-200 px-8">
-                Sign In
-              </Button>
-            </DrawerTrigger>
-            
-            <DrawerContent 
-              className="border-0 h-[50vh] rounded-none"
-              style={{ 
-                backgroundImage: 'url(/drawer-bg.png)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundColor: 'rgb(9 9 11)',
-              }}
-            >
-              <div className="mx-auto w-full max-w-sm px-6 py-8 pb-12 relative z-10">
-                <div className="text-center mb-6">
-                  <h2 className="text-xl font-semibold text-zinc-100">Welcome back</h2>
-                  <p className="text-sm text-zinc-500 mt-1">Enter your credentials to continue</p>
-                </div>
-
+          {/* Desktop: Dialog */}
+          <div className="hidden sm:block">
+            <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-zinc-100 text-zinc-900 hover:bg-zinc-200 px-8">
+                  Sign In
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="border-zinc-900 bg-surface sm:max-w-sm">
+                <DialogHeader>
+                  <DialogTitle className="text-zinc-100">Welcome back</DialogTitle>
+                  <DialogDescription>Enter your credentials to continue</DialogDescription>
+                </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {error && (
                     <div className="bg-red-950/50 border border-red-900/50 text-red-400 px-4 py-3 rounded-lg text-sm">
                       {error}
                     </div>
                   )}
-                  
                   <div className="space-y-3">
                     <Input
                       id="email"
@@ -479,9 +477,82 @@ const Login = () => {
                     </div>
                   </div>
                 </form>
-              </div>
-            </DrawerContent>
-          </Drawer>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Mobile: Drawer */}
+          <div className="sm:hidden">
+            <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+              <DrawerTrigger asChild>
+                <Button className="bg-zinc-100 text-zinc-900 hover:bg-zinc-200 px-8">
+                  Sign In
+                </Button>
+              </DrawerTrigger>
+              
+              <DrawerContent 
+                className="border-0 h-[50vh] rounded-none"
+                style={{ 
+                  backgroundImage: 'url(/drawer-bg.png)',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundColor: 'rgb(9 9 11)',
+                }}
+              >
+                <div className="mx-auto w-full max-w-sm px-6 py-8 pb-12 relative z-10">
+                  <div className="text-center mb-6">
+                    <h2 className="text-xl font-semibold text-zinc-100">Welcome back</h2>
+                    <p className="text-sm text-zinc-500 mt-1">Enter your credentials to continue</p>
+                  </div>
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    {error && (
+                      <div className="bg-red-950/50 border border-red-900/50 text-red-400 px-4 py-3 rounded-lg text-sm">
+                        {error}
+                      </div>
+                    )}
+                    
+                    <div className="space-y-3">
+                      <Input
+                        id="email"
+                        type="email"
+                        autoComplete="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Email"
+                        className="w-full bg-zinc-900 border-zinc-800 focus:border-zinc-600 focus-visible:ring-zinc-700 focus-visible:ring-offset-0 placeholder:text-zinc-600"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="password"
+                          type="password"
+                          autoComplete="current-password"
+                          required
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="Password"
+                          className="flex-1 bg-zinc-900 border-zinc-800 focus:border-zinc-600 focus-visible:ring-zinc-700 focus-visible:ring-offset-0 placeholder:text-zinc-600"
+                        />
+                        <Button
+                          type="submit"
+                          disabled={loading}
+                          size="icon"
+                          className="flex-shrink-0 h-10 w-10 rounded-md bg-zinc-100 text-zinc-900 hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-500"
+                        >
+                          {loading ? (
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                          ) : (
+                            <AnimatedSendHorizontal size={20} loop />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </DrawerContent>
+            </Drawer>
+          </div>
         </div>
       </div>
     </div>
