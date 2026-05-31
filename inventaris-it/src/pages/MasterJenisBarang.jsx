@@ -21,7 +21,6 @@ const MasterJenisBarang = () => {
     fetchJenisPerangkat();
   }, []);
 
-  // ESC key handler for modals
   useEffect(() => {
     const handleEscKey = (event) => {
       if (event.key === 'Escape' && showAddForm) {
@@ -30,88 +29,54 @@ const MasterJenisBarang = () => {
         setForm({ nama: '', jenis_perangkat_kode: '', is_active: true });
       }
     };
-
     if (showAddForm) {
       document.addEventListener('keydown', handleEscKey);
-      return () => {
-        document.removeEventListener('keydown', handleEscKey);
-      };
+      return () => document.removeEventListener('keydown', handleEscKey);
     }
   }, [showAddForm]);
 
   const fetchJenisBarang = async () => {
     try {
       setLoading(true);
-      
-      // First, try to fetch jenis barang with join
       let query = supabase
         .from('ms_jenis_barang')
         .select('*')
         .order('jenis_perangkat_kode', { ascending: true, nullsFirst: false })
         .order('nama');
-
       const { data, error } = await query;
-
       if (error) {
-        console.error('Error fetching jenis barang:', error);
-        toast.error('❌ Gagal memuat data: ' + error.message);
+        toast.error('Gagal memuat data: ' + error.message);
         setJenisBarang([]);
         return;
       }
-
-      // If we have data, fetch jenis_perangkat and join manually
       if (data && data.length > 0) {
         const jenisPerangkatKodes = [...new Set(data.map(item => item.jenis_perangkat_kode).filter(Boolean))];
-        
         if (jenisPerangkatKodes.length > 0) {
           const { data: jenisPerangkatData } = await supabase
             .from('ms_jenis_perangkat')
             .select('kode, nama')
             .in('kode', jenisPerangkatKodes);
-
-          // Create a map for quick lookup
           const jenisPerangkatMap = {};
-          if (jenisPerangkatData) {
-            jenisPerangkatData.forEach(jp => {
-              jenisPerangkatMap[jp.kode] = { kode: jp.kode, nama: jp.nama };
-            });
-          }
-
-          // Attach jenis_perangkat to each item
-          const dataWithJoin = data.map(item => ({
+          if (jenisPerangkatData) jenisPerangkatData.forEach(jp => { jenisPerangkatMap[jp.kode] = jp; });
+          setJenisBarang(data.map(item => ({
             ...item,
             jenis_perangkat: item.jenis_perangkat_kode ? jenisPerangkatMap[item.jenis_perangkat_kode] : null
-          }));
-
-          setJenisBarang(dataWithJoin);
-        } else {
-          setJenisBarang(data);
-        }
-      } else {
-        setJenisBarang(data || []);
-      }
+          })));
+        } else { setJenisBarang(data); }
+      } else { setJenisBarang(data || []); }
     } catch (error) {
-      console.error('Error fetching jenis barang:', error);
-      toast.error('❌ Gagal memuat data: ' + error.message);
+      toast.error('Gagal memuat data: ' + error.message);
       setJenisBarang([]);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const fetchJenisPerangkat = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('ms_jenis_perangkat')
-        .select('*')
-        .eq('is_active', true)
-        .order('kode');
-
-      if (error) throw error;
-      setJenisPerangkatList(data || []);
-    } catch (error) {
-      console.error('Error fetching jenis perangkat:', error.message);
-    }
+    const { data } = await supabase
+      .from('ms_jenis_perangkat')
+      .select('*')
+      .eq('is_active', true)
+      .order('kode');
+    setJenisPerangkatList(data || []);
   };
 
   const handleAdd = () => {
@@ -123,11 +88,7 @@ const MasterJenisBarang = () => {
 
   const handleEdit = (item) => {
     setEditingId(item.id);
-    setForm({ 
-      nama: item.nama, 
-      jenis_perangkat_kode: item.jenis_perangkat_kode || '', 
-      is_active: item.is_active 
-    });
+    setForm({ nama: item.nama, jenis_perangkat_kode: item.jenis_perangkat_kode || '', is_active: item.is_active });
     setShowAddForm(true);
     fetchJenisPerangkat();
   };
@@ -136,125 +97,55 @@ const MasterJenisBarang = () => {
     e.preventDefault();
     try {
       const trimmedNama = form.nama.trim();
-
-      if (!trimmedNama) {
-        toast.error('❌ Nama jenis barang tidak boleh kosong!');
-        return;
-      }
-
-      const submitData = {
-        ...form,
-        nama: trimmedNama,
-        jenis_perangkat_kode: form.jenis_perangkat_kode || null,
-      };
-
-      // Check for duplicates before save
+      if (!trimmedNama) { toast.error('Nama jenis barang tidak boleh kosong!'); return; }
+      const submitData = { ...form, nama: trimmedNama, jenis_perangkat_kode: form.jenis_perangkat_kode || null };
       if (editingId) {
-        // Update: Check if nama already exists (excluding current record, case-insensitive)
-        const { data: duplicate } = await supabase
-          .from('ms_jenis_barang')
-          .select('id, nama')
-          .ilike('nama', trimmedNama)
-          .neq('id', editingId)
-          .maybeSingle();
-
-        if (duplicate) {
-          toast.error(`❌ Nama jenis barang "${trimmedNama}" sudah digunakan!`);
-          return;
-        }
-
-        const { error } = await supabase
-          .from('ms_jenis_barang')
-          .update(submitData)
-          .eq('id', editingId);
-
+        const { data: dup } = await supabase.from('ms_jenis_barang').select('id').ilike('nama', trimmedNama).neq('id', editingId).maybeSingle();
+        if (dup) { toast.error(`Nama "${trimmedNama}" sudah digunakan!`); return; }
+        const { error } = await supabase.from('ms_jenis_barang').update(submitData).eq('id', editingId);
         if (error) throw error;
-        toast.success('✅ Data berhasil diupdate!');
+        toast.success('Data berhasil diupdate!');
       } else {
-        // Insert: Check if nama already exists (case-insensitive)
-        const { data: duplicate } = await supabase
-          .from('ms_jenis_barang')
-          .select('id, nama')
-          .ilike('nama', trimmedNama)
-          .maybeSingle();
-
-        if (duplicate) {
-          toast.error(`❌ Nama jenis barang "${trimmedNama}" sudah digunakan!`);
-          return;
-        }
-
-        const { error } = await supabase
-          .from('ms_jenis_barang')
-          .insert([submitData]);
-
+        const { data: dup } = await supabase.from('ms_jenis_barang').select('id').ilike('nama', trimmedNama).maybeSingle();
+        if (dup) { toast.error(`Nama "${trimmedNama}" sudah digunakan!`); return; }
+        const { error } = await supabase.from('ms_jenis_barang').insert([submitData]);
         if (error) throw error;
-        toast.success('✅ Data berhasil ditambahkan!');
+        toast.success('Data berhasil ditambahkan!');
       }
-
       setShowAddForm(false);
       setForm({ nama: '', jenis_perangkat_kode: '', is_active: true });
       setEditingId(null);
       fetchJenisBarang();
     } catch (error) {
-      toast.error('❌ Gagal menyimpan data: ' + error.message);
+      toast.error('Gagal menyimpan data: ' + error.message);
     }
   };
 
   const handleDelete = async (id, nama) => {
     if (!confirm(`Hapus jenis barang "${nama}"?`)) return;
-
     try {
-      const { error } = await supabase
-        .from('ms_jenis_barang')
-        .delete()
-        .eq('id', id);
-
+      const { error } = await supabase.from('ms_jenis_barang').delete().eq('id', id);
       if (error) throw error;
-      toast.success('✅ Data berhasil dihapus!');
+      toast.success('Data berhasil dihapus!');
       fetchJenisBarang();
     } catch (error) {
-      toast.error('❌ Gagal menghapus data: ' + error.message);
+      toast.error('Gagal menghapus data: ' + error.message);
     }
   };
 
-  // Group jenis barang by jenis_perangkat_kode
   const groupedData = () => {
     const groups = {};
     const ungrouped = [];
-
     jenisBarang.forEach((item) => {
       const key = item.jenis_perangkat_kode || 'ungrouped';
-      if (key === 'ungrouped') {
-        ungrouped.push(item);
-      } else {
-        if (!groups[key]) {
-          groups[key] = {
-            jenis_perangkat: item.jenis_perangkat,
-            items: []
-          };
-        }
+      if (key === 'ungrouped') { ungrouped.push(item); }
+      else {
+        if (!groups[key]) groups[key] = { jenis_perangkat: item.jenis_perangkat, items: [] };
         groups[key].items.push(item);
       }
     });
-
-    // Convert to array and sort by jenis_perangkat_kode
-    const result = Object.keys(groups)
-      .sort()
-      .map(kode => ({
-        kode,
-        jenis_perangkat: groups[kode].jenis_perangkat,
-        items: groups[kode].items.sort((a, b) => a.nama.localeCompare(b.nama))
-      }));
-
-    // Add ungrouped at the end if any
-    if (ungrouped.length > 0) {
-      result.push({
-        kode: null,
-        jenis_perangkat: null,
-        items: ungrouped.sort((a, b) => a.nama.localeCompare(b.nama))
-      });
-    }
-
+    const result = Object.keys(groups).sort().map(kode => ({ kode, jenis_perangkat: groups[kode].jenis_perangkat, items: groups[kode].items.sort((a, b) => a.nama.localeCompare(b.nama)) }));
+    if (ungrouped.length > 0) result.push({ kode: null, jenis_perangkat: null, items: ungrouped.sort((a, b) => a.nama.localeCompare(b.nama)) });
     return result;
   };
 
@@ -276,14 +167,14 @@ const MasterJenisBarang = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Master Jenis Barang</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Kelola kode dan nama jenis barang untuk kategorisasi perangkat
+            <h1 className="text-3xl font-bold text-white">Master Jenis Barang</h1>
+            <p className="mt-1 text-sm text-gray-400">
+              Kelola jenis barang untuk kategorisasi perangkat
             </p>
           </div>
           <button
             onClick={handleAdd}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-medium transition text-sm"
           >
             + Tambah Jenis Barang
           </button>
@@ -291,20 +182,20 @@ const MasterJenisBarang = () => {
 
         {/* Form Modal */}
         {showAddForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+            <div className="bg-gray-950 rounded-xl shadow-2xl shadow-black/50 border border-gray-800 max-w-md w-full p-6">
+              <h2 className="text-lg font-bold text-white mb-4">
                 {editingId ? 'Edit Jenis Barang' : 'Tambah Jenis Barang'}
               </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Jenis Perangkat
+                  <label className="block text-xs font-medium text-gray-400 mb-1">
+                    Jenis Perangkat <span className="text-yellow-300">*</span>
                   </label>
                   <select
                     value={form.jenis_perangkat_kode}
                     onChange={(e) => setForm({ ...form, jenis_perangkat_kode: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
                   >
                     <option value="">-- Pilih Jenis Perangkat --</option>
                     {jenisPerangkatList.map((jenis) => (
@@ -313,53 +204,47 @@ const MasterJenisBarang = () => {
                       </option>
                     ))}
                   </select>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Pilih jenis perangkat untuk filtering dropdown di Stok Opnam
-                  </p>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nama Jenis Barang *
+                  <label className="block text-xs font-medium text-gray-400 mb-1">
+                    Nama Jenis Barang <span className="text-yellow-300">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={form.nama}
                     onChange={(e) => setForm({ ...form, nama: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
                     placeholder="Ink Jet, Laser Jet, Thermal, dll"
                   />
                 </div>
-
                 <div className="flex items-center">
                   <input
                     type="checkbox"
                     id="is_active"
                     checked={form.is_active}
                     onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 bg-gray-950 border border-gray-700 rounded focus:ring-gray-600 text-blue-600"
                   />
-                  <label htmlFor="is_active" className="ml-2 text-sm text-gray-700">
+                  <label htmlFor="is_active" className="ml-2 text-xs text-gray-400">
                     Aktif (tampil di dropdown)
                   </label>
                 </div>
-
                 <div className="flex gap-3 justify-end pt-4">
                   <button
                     type="button"
-                      onClick={() => {
-                        setShowAddForm(false);
-                        setEditingId(null);
-                        setForm({ nama: '', jenis_perangkat_kode: '', is_active: true });
-                      }}
-                    className="px-6 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition"
+                    onClick={() => {
+                      setShowAddForm(false);
+                      setEditingId(null);
+                      setForm({ nama: '', jenis_perangkat_kode: '', is_active: true });
+                    }}
+                    className="px-5 py-2 border border-gray-700 rounded-lg text-sm text-gray-400 hover:bg-gray-800 transition"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    className="px-5 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-500 transition"
                   >
                     {editingId ? 'Update' : 'Simpan'}
                   </button>
@@ -370,94 +255,99 @@ const MasterJenisBarang = () => {
         )}
 
         {/* Info Card */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start">
-            <div className="text-2xl mr-3">ℹ️</div>
+        <div className="bg-gray-950 border border-gray-800 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <span className="text-lg mt-0.5">&#8505;</span>
             <div>
-              <h3 className="font-semibold text-blue-900 mb-1">
-                Jenis Barang & Filtering
+              <h3 className="font-semibold text-sm text-white mb-1">
+                Jenis Barang &amp; Filtering
               </h3>
-              <p className="text-sm text-blue-800 mb-2">
+              <p className="text-xs text-gray-400">
                 Jenis barang digunakan untuk kategorisasi perangkat. Hubungkan dengan Jenis Perangkat untuk filtering otomatis di Stok Opnam.
-              </p>
-              <p className="text-xs text-blue-700">
-                <strong>Contoh:</strong> Jika Jenis Barang "Ink Jet" dihubungkan dengan Jenis Perangkat "003-Printer", 
-                maka saat user memilih Printer di Stok Opnam, dropdown akan otomatis menampilkan Ink Jet.
               </p>
             </div>
           </div>
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-xl shadow-md overflow-hidden inline-block w-auto">
-          {jenisBarang.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <p className="text-lg">Belum ada data master jenis barang</p>
-            </div>
-          ) : (
-            <table className="w-auto divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Jenis Perangkat / Nama Jenis Barang
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {grouped.map((group) => (
-                  <React.Fragment key={`group-${group.kode || 'ungrouped'}`}>
-                    {/* Parent row - Jenis Perangkat */}
-                    <tr>
-                      <td colSpan="2" className="px-6 py-3">
-                        <div className="flex items-center">
-                          <span className="text-lg font-mono font-bold text-gray-900">
-                            {group.jenis_perangkat ? group.jenis_perangkat.kode : '❓'}
-                          </span>
-                          <span className="ml-3 text-base font-semibold text-gray-900">
-                            {group.jenis_perangkat ? group.jenis_perangkat.nama : 'Tidak Terhubung'}
-                          </span>
-                          <span className="ml-2 text-xs text-gray-500">
-                            ({group.items.length} {group.items.length === 1 ? 'item' : 'items'})
-                          </span>
+        <div className="bg-gray-950 rounded-xl border border-gray-800 overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-800">
+            <thead>
+              <tr className="bg-gray-900">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Jenis Perangkat / Nama Jenis Barang
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                  Aksi
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-800">
+              {grouped.map((group) => (
+                <React.Fragment key={`group-${group.kode || 'ungrouped'}`}>
+                  {/* Parent row - Jenis Perangkat */}
+                  <tr className="bg-gray-900/50">
+                    <td colSpan="3" className="px-6 py-3">
+                      <div className="flex items-center">
+                        <span className="text-lg font-mono font-bold text-yellow-400">
+                          {group.jenis_perangkat ? group.jenis_perangkat.kode : '-'}
+                        </span>
+                        <span className="ml-3 text-base font-semibold text-white">
+                          {group.jenis_perangkat ? group.jenis_perangkat.nama : 'Tidak Terhubung'}
+                        </span>
+                        <span className="ml-2 text-xs text-gray-500">
+                          ({group.items.length} {group.items.length === 1 ? 'item' : 'items'})
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                  {/* Child rows - Jenis Barang */}
+                  {group.items.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-900/50 transition-colors">
+                      <td className="px-6 py-3 whitespace-nowrap">
+                        <div className="flex items-center pl-8">
+                          <span className="text-gray-500 mr-2">&#8618;</span>
+                          <span className="text-sm font-medium text-white">{item.nama}</span>
                         </div>
                       </td>
+                      <td className="px-6 py-3 whitespace-nowrap">
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            item.is_active
+                              ? 'bg-green-950/50 text-green-400 border border-green-800'
+                              : 'bg-gray-800 text-gray-400 border border-gray-700'
+                          }`}
+                        >
+                          {item.is_active ? 'Aktif' : 'Nonaktif'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3 whitespace-nowrap text-sm font-medium space-x-3">
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="text-blue-400 hover:text-blue-300 transition"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id, item.nama)}
+                          className="text-red-400 hover:text-red-300 transition"
+                        >
+                          Hapus
+                        </button>
+                      </td>
                     </tr>
-                    {/* Child rows - Jenis Barang */}
-                    {group.items.map((item) => (
-                      <tr key={item.id}>
-                        <td className="px-6 py-3 whitespace-nowrap">
-                          <div className="flex items-center pl-8">
-                            <span className="text-gray-400 mr-2">└─</span>
-                            <span className="text-sm font-medium text-gray-900">
-                              {item.nama}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-3 whitespace-nowrap text-sm font-medium space-x-3">
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className="text-blue-600 hover:text-blue-700"
-                            title="Edit"
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item.id, item.nama)}
-                            className="text-red-600 hover:text-red-700"
-                            title="Hapus"
-                          >
-                            🗑️
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
+                  ))}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+          {jenisBarang.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-sm">Belum ada data master jenis barang</p>
+            </div>
           )}
         </div>
       </div>
