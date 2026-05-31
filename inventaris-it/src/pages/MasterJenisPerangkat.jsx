@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
 import { useToast } from '../contexts/ToastContext';
+import { InformationCircleIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 const MasterJenisPerangkat = () => {
   const toast = useToast();
@@ -200,7 +201,7 @@ const MasterJenisPerangkat = () => {
         {/* Info Card */}
         <div className="bg-gray-950 border border-gray-800 rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <span className="text-lg mt-0.5">ℹ️</span>
+            <InformationCircleIcon className="size-5 text-blue-400 shrink-0 mt-0.5" />
             <div>
               <h3 className="font-semibold text-sm text-white mb-1">
                 Format ID Perangkat Auto-Generate
@@ -240,8 +241,8 @@ const MasterJenisPerangkat = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
-                    <button onClick={() => handleEdit(item)} className="text-blue-400 hover:text-blue-300 transition">✏️ Edit</button>
-                    <button onClick={() => handleDelete(item.id, item.nama)} className="text-red-400 hover:text-red-300 transition">🗑️ Hapus</button>
+                    <button onClick={() => handleEdit(item)} className="text-blue-400 hover:text-blue-300 transition inline-flex items-center"><PencilSquareIcon className="size-3.5 mr-1" /> Edit</button>
+                    <button onClick={() => handleDelete(item.id, item.nama)} className="text-red-400 hover:text-red-300 transition inline-flex items-center"><TrashIcon className="size-3.5 mr-1" /> Hapus</button>
                   </td>
                 </tr>
               ))}
