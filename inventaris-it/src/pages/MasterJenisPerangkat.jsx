@@ -9,17 +9,10 @@ const MasterJenisPerangkat = () => {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({
-    kode: '',
-    nama: '',
-    is_active: true,
-  });
+  const [form, setForm] = useState({ kode: '', nama: '', is_active: true });
 
-  useEffect(() => {
-    fetchJenisPerangkat();
-  }, []);
+  useEffect(() => { fetchJenisPerangkat(); }, []);
 
-  // ESC key handler for modals
   useEffect(() => {
     const handleEscKey = (event) => {
       if (event.key === 'Escape' && showAddForm) {
@@ -28,30 +21,21 @@ const MasterJenisPerangkat = () => {
         setForm({ kode: '', nama: '', is_active: true });
       }
     };
-
     if (showAddForm) {
       document.addEventListener('keydown', handleEscKey);
-      return () => {
-        document.removeEventListener('keydown', handleEscKey);
-      };
+      return () => document.removeEventListener('keydown', handleEscKey);
     }
   }, [showAddForm]);
 
   const fetchJenisPerangkat = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('ms_jenis_perangkat')
-        .select('*')
-        .order('kode');
-
+      const { data, error } = await supabase.from('ms_jenis_perangkat').select('*').order('kode');
       if (error) throw error;
       setJenisPerangkat(data);
     } catch (error) {
       console.error('Error fetching jenis perangkat:', error.message);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleAdd = () => {
@@ -69,106 +53,45 @@ const MasterJenisPerangkat = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Trim form values
       const trimmedKode = form.kode.trim();
       const trimmedNama = form.nama.trim();
+      if (!trimmedKode || !trimmedNama) { toast.error('Kode dan nama tidak boleh kosong!'); return; }
 
-      if (!trimmedKode || !trimmedNama) {
-        toast.error('❌ Kode dan nama tidak boleh kosong!');
-        return;
-      }
-
-      // Check for duplicates before save
       if (editingId) {
-        // Update: Check if kode or nama already exists (excluding current record)
-        const { data: duplicateKode } = await supabase
-          .from('ms_jenis_perangkat')
-          .select('id, kode, nama')
-          .eq('kode', trimmedKode)
-          .neq('id', editingId)
-          .maybeSingle();
-
-        if (duplicateKode) {
-          toast.error(`❌ Kode "${trimmedKode}" sudah digunakan oleh "${duplicateKode.nama}"!`);
-          return;
-        }
-
-        const { data: duplicateNama } = await supabase
-          .from('ms_jenis_perangkat')
-          .select('id, kode, nama')
-          .ilike('nama', trimmedNama)
-          .neq('id', editingId)
-          .maybeSingle();
-
-        if (duplicateNama) {
-          toast.error(`❌ Nama "${trimmedNama}" sudah digunakan oleh kode "${duplicateNama.kode}"!`);
-          return;
-        }
-
-        // Update
-        const { error } = await supabase
-          .from('ms_jenis_perangkat')
-          .update({ ...form, kode: trimmedKode, nama: trimmedNama })
-          .eq('id', editingId);
-
+        const { data: dupKode } = await supabase.from('ms_jenis_perangkat').select('id').eq('kode', trimmedKode).neq('id', editingId).maybeSingle();
+        if (dupKode) { toast.error(`Kode "${trimmedKode}" sudah digunakan!`); return; }
+        const { data: dupNama } = await supabase.from('ms_jenis_perangkat').select('id').ilike('nama', trimmedNama).neq('id', editingId).maybeSingle();
+        if (dupNama) { toast.error(`Nama "${trimmedNama}" sudah digunakan!`); return; }
+        const { error } = await supabase.from('ms_jenis_perangkat').update({ ...form, kode: trimmedKode, nama: trimmedNama }).eq('id', editingId);
         if (error) throw error;
-        toast.success('✅ Data berhasil diupdate!');
+        toast.success('Data berhasil diupdate!');
       } else {
-        // Insert: Check if kode or nama already exists
-        const { data: duplicateKode } = await supabase
-          .from('ms_jenis_perangkat')
-          .select('id, kode, nama')
-          .eq('kode', trimmedKode)
-          .maybeSingle();
-
-        if (duplicateKode) {
-          toast.error(`❌ Kode "${trimmedKode}" sudah digunakan oleh "${duplicateKode.nama}"!`);
-          return;
-        }
-
-        const { data: duplicateNama } = await supabase
-          .from('ms_jenis_perangkat')
-          .select('id, kode, nama')
-          .ilike('nama', trimmedNama)
-          .maybeSingle();
-
-        if (duplicateNama) {
-          toast.error(`❌ Nama "${trimmedNama}" sudah digunakan oleh kode "${duplicateNama.kode}"!`);
-          return;
-        }
-
-        // Insert
-        const { error } = await supabase
-          .from('ms_jenis_perangkat')
-          .insert([{ ...form, kode: trimmedKode, nama: trimmedNama }]);
-
+        const { data: dupKode } = await supabase.from('ms_jenis_perangkat').select('id').eq('kode', trimmedKode).maybeSingle();
+        if (dupKode) { toast.error(`Kode "${trimmedKode}" sudah digunakan!`); return; }
+        const { data: dupNama } = await supabase.from('ms_jenis_perangkat').select('id').ilike('nama', trimmedNama).maybeSingle();
+        if (dupNama) { toast.error(`Nama "${trimmedNama}" sudah digunakan!`); return; }
+        const { error } = await supabase.from('ms_jenis_perangkat').insert([{ ...form, kode: trimmedKode, nama: trimmedNama }]);
         if (error) throw error;
-        toast.success('✅ Data berhasil ditambahkan!');
+        toast.success('Data berhasil ditambahkan!');
       }
-
       setShowAddForm(false);
       setForm({ kode: '', nama: '', is_active: true });
       setEditingId(null);
       fetchJenisPerangkat();
     } catch (error) {
-      toast.error('❌ Gagal menyimpan data: ' + error.message);
+      toast.error('Gagal menyimpan data: ' + error.message);
     }
   };
 
   const handleDelete = async (id, nama) => {
     if (!confirm(`Hapus jenis perangkat "${nama}"?`)) return;
-
     try {
-      const { error } = await supabase
-        .from('ms_jenis_perangkat')
-        .delete()
-        .eq('id', id);
-
+      const { error } = await supabase.from('ms_jenis_perangkat').delete().eq('id', id);
       if (error) throw error;
-      toast.success('✅ Data berhasil dihapus!');
+      toast.success('Data berhasil dihapus!');
       fetchJenisPerangkat();
     } catch (error) {
-      toast.error('❌ Gagal menghapus data: ' + error.message);
+      toast.error('Gagal menghapus data: ' + error.message);
     }
   };
 
@@ -188,14 +111,14 @@ const MasterJenisPerangkat = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Master Jenis Perangkat</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-3xl font-bold text-white">Master Jenis Perangkat</h1>
+            <p className="mt-1 text-sm text-gray-400">
               Kelola kode dan nama jenis perangkat untuk auto-generate ID
             </p>
           </div>
           <button
             onClick={handleAdd}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-medium transition text-sm"
           >
             + Tambah Jenis
           </button>
@@ -203,59 +126,53 @@ const MasterJenisPerangkat = () => {
 
         {/* Form Modal */}
         {showAddForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+            <div className="bg-gray-950 rounded-xl shadow-2xl shadow-black/50 border border-gray-800 max-w-md w-full p-6">
+              <h2 className="text-lg font-bold text-white mb-4">
                 {editingId ? 'Edit Jenis Perangkat' : 'Tambah Jenis Perangkat'}
               </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Kode (3 digit) *
+                  <label className="block text-xs font-medium text-gray-400 mb-1">
+                    Kode (3 digit) <span className="text-yellow-300">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     maxLength="3"
-                    pattern="[0-9]{3}"
                     value={form.kode}
                     onChange={(e) => setForm({ ...form, kode: e.target.value })}
                     disabled={!!editingId}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                    className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent disabled:bg-gray-900 disabled:text-gray-500 placeholder-gray-500"
                     placeholder="001"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    3 digit angka, ex: 001, 002, 003
-                  </p>
+                  <p className="text-xs text-gray-500 mt-1">3 digit angka, ex: 001, 002, 003</p>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nama Jenis Perangkat *
+                  <label className="block text-xs font-medium text-gray-400 mb-1">
+                    Nama Jenis Perangkat <span className="text-yellow-300">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={form.nama}
                     onChange={(e) => setForm({ ...form, nama: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
                     placeholder="Komputer Set"
                   />
                 </div>
-
                 <div className="flex items-center">
                   <input
                     type="checkbox"
                     id="is_active"
                     checked={form.is_active}
                     onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 bg-gray-950 border border-gray-700 rounded focus:ring-gray-600 text-blue-600"
                   />
-                  <label htmlFor="is_active" className="ml-2 text-sm text-gray-700">
+                  <label htmlFor="is_active" className="ml-2 text-xs text-gray-400">
                     Aktif (tampil di dropdown)
                   </label>
                 </div>
-
                 <div className="flex gap-3 justify-end pt-4">
                   <button
                     type="button"
@@ -264,13 +181,13 @@ const MasterJenisPerangkat = () => {
                       setEditingId(null);
                       setForm({ kode: '', nama: '', is_active: true });
                     }}
-                    className="px-6 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition"
+                    className="px-5 py-2 border border-gray-700 rounded-lg text-sm text-gray-400 hover:bg-gray-800 transition"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    className="px-5 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-500 transition"
                   >
                     {editingId ? 'Update' : 'Simpan'}
                   </button>
@@ -281,87 +198,58 @@ const MasterJenisPerangkat = () => {
         )}
 
         {/* Info Card */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start">
-            <div className="text-2xl mr-3">ℹ️</div>
+        <div className="bg-gray-950 border border-gray-800 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <span className="text-lg mt-0.5">ℹ️</span>
             <div>
-              <h3 className="font-semibold text-blue-900 mb-1">
+              <h3 className="font-semibold text-sm text-white mb-1">
                 Format ID Perangkat Auto-Generate
               </h3>
-              <p className="text-sm text-blue-800">
-                <strong>KODE.TAHUN.BULAN.URUTAN</strong>
-              </p>
-              <p className="text-sm text-blue-800 mt-1">
-                Contoh: <code className="bg-blue-100 px-2 py-0.5 rounded">001.2026.01.0001</code> 
-                {' '}= Komputer Set, Januari 2026, urutan ke-1
+              <p className="text-xs text-gray-400">
+                KODE.TAHUN.BULAN.URUTAN — Contoh: 001.2026.01.0001
               </p>
             </div>
           </div>
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Kode
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Nama Jenis Perangkat
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Aksi
-                </th>
+        <div className="bg-gray-950 rounded-xl border border-gray-800 overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-800">
+            <thead>
+              <tr className="bg-gray-900">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Kode</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Nama Jenis Perangkat</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Aksi</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-800">
               {jenisPerangkat.map((item) => (
-                <tr key={item.id} className="group hover:bg-[#171717] transition-colors">
+                <tr key={item.id} className="hover:bg-gray-900/50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-lg font-mono font-bold text-[#ffae00]">
-                      {item.kode}
-                    </span>
+                    <span className="text-lg font-mono font-bold text-yellow-400">{item.kode}</span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 group-hover:text-white">
-                    {item.nama}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{item.nama}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        item.is_active
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      item.is_active
+                        ? 'bg-green-950/50 text-green-400 border border-green-800'
+                        : 'bg-gray-800 text-gray-400 border border-gray-700'
+                    }`}>
                       {item.is_active ? 'Aktif' : 'Nonaktif'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
-                    <button
-                      onClick={() => handleEdit(item)}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      ✏️ Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item.id, item.nama)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      🗑️ Hapus
-                    </button>
+                    <button onClick={() => handleEdit(item)} className="text-blue-400 hover:text-blue-300 transition">✏️ Edit</button>
+                    <button onClick={() => handleDelete(item.id, item.nama)} className="text-red-400 hover:text-red-300 transition">🗑️ Hapus</button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-
           {jenisPerangkat.length === 0 && (
             <div className="text-center py-12 text-gray-500">
-              <p className="text-lg">Belum ada data master jenis perangkat</p>
+              <p className="text-sm">Belum ada data master jenis perangkat</p>
             </div>
           )}
         </div>
