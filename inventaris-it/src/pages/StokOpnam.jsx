@@ -1330,7 +1330,7 @@ const StokOpnam = () => {
                         <SelectTrigger className="w-full h-9 px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600">
                           <SelectValue placeholder="-- Pilih Lokasi --" />
                         </SelectTrigger>
-                        <SelectContent className="bg-gray-950 border border-gray-800 text-white">
+                        <SelectContent className="bg-gray-950 border border-gray-800 text-white max-h-[260px]">
                           <div className="sticky top-0 z-10 bg-gray-950 px-2 py-1.5 border-b border-gray-800" onPointerDownCapture={(e) => e.stopPropagation()}>
                             <input
                               type="text"
