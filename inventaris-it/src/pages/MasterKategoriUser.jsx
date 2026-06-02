@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
 import { useToast } from '../contexts/ToastContext';
+import { InformationCircleIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 const MasterKategoriUser = () => {
   const toast = useToast();
@@ -259,7 +260,7 @@ const MasterKategoriUser = () => {
         {/* Info Card */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start">
-            <div className="text-2xl mr-3">ℹ️</div>
+            <InformationCircleIcon className="size-6 text-blue-500 shrink-0 mt-0.5" />
             <div>
               <h3 className="font-semibold text-blue-900 mb-1">
                 Kategori User untuk Sistem Penugasan
@@ -317,13 +318,13 @@ const MasterKategoriUser = () => {
                       onClick={() => handleEdit(item)}
                       className="text-blue-600 hover:text-blue-900"
                     >
-                      ✏️ Edit
+                      <PencilSquareIcon className="size-3.5 inline mr-1" /> Edit
                     </button>
                     <button
                       onClick={() => handleDelete(item.id, item.name)}
                       className="text-red-600 hover:text-red-900"
                     >
-                      🗑️ Hapus
+                      <TrashIcon className="size-3.5 inline mr-1" /> Hapus
                     </button>
                   </td>
                 </tr>

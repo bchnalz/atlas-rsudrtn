@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
 import { useToast } from '../contexts/ToastContext';
+import { ChartBarSquareIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 const MasterSKP = () => {
   const toast = useToast();
@@ -408,7 +409,7 @@ const MasterSKP = () => {
         {/* Info Card */}
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-start">
-            <div className="text-2xl mr-3">🎯</div>
+            <ChartBarSquareIcon className="size-6 text-green-500 shrink-0 mt-0.5" />
             <div>
               <h3 className="font-semibold text-green-900 mb-1">
                 Sasaran Kerja Pegawai (SKP)
@@ -471,19 +472,19 @@ const MasterSKP = () => {
                       onClick={() => handleSetTarget(item)}
                       className="text-green-600 hover:text-green-900"
                     >
-                      🎯 Target
+                      <ChartBarSquareIcon className="size-3.5 inline mr-1" /> Target
                     </button>
                     <button
                       onClick={() => handleEdit(item)}
                       className="text-blue-600 hover:text-blue-900"
                     >
-                      ✏️ Edit
+                      <PencilSquareIcon className="size-3.5 inline mr-1" /> Edit
                     </button>
                     <button
                       onClick={() => handleDelete(item.id, item.name)}
                       className="text-red-600 hover:text-red-900"
                     >
-                      🗑️ Hapus
+                      <TrashIcon className="size-3.5 inline mr-1" /> Hapus
                     </button>
                   </td>
                 </tr>
