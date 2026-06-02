@@ -1331,7 +1331,7 @@ const StokOpnam = () => {
                           <SelectValue placeholder="-- Pilih Lokasi --" />
                         </SelectTrigger>
                         <SelectContent className="bg-gray-950 border border-gray-800 text-white">
-                          <div className="px-2 py-1.5 border-b border-gray-800" onPointerDown={(e) => e.stopPropagation()}>
+                          <div className="sticky top-0 z-10 bg-gray-950 px-2 py-1.5 border-b border-gray-800" onPointerDownCapture={(e) => { e.stopPropagation(); e.preventDefault(); }}>
                             <input
                               type="text"
                               value={lokasiSearch}
