@@ -19,6 +19,7 @@ const StokOpnam = () => {
   const [jenisPerangkatList, setJenisPerangkatList] = useState([]);
   const [jenisBarangList, setJenisBarangList] = useState([]);
   const [lokasiList, setLokasiList] = useState([]);
+  const [lokasiSearch, setLokasiSearch] = useState('');
   const [userCategory, setUserCategory] = useState(null);
   // Don't block initial render; load data after first paint
   const [loading, setLoading] = useState(false);
@@ -1320,23 +1321,46 @@ const StokOpnam = () => {
                       </label>
                       <Select
                         value={step1Form.lokasi_kode}
-                        onValueChange={(value) =>
-                          setStep1Form({ ...step1Form, lokasi_kode: value })
-                        }
+                        onValueChange={(value) => {
+                          setStep1Form({ ...step1Form, lokasi_kode: value });
+                          setLokasiSearch('');
+                        }}
+                        onOpenChange={(open) => { if (!open) setLokasiSearch(''); }}
                       >
                         <SelectTrigger className="w-full h-9 px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600">
                           <SelectValue placeholder="-- Pilih Lokasi --" />
                         </SelectTrigger>
                         <SelectContent className="bg-gray-950 border border-gray-800 text-white">
-                          {lokasiList.map((lok) => (
-                            <SelectItem 
-                              key={lok.id} 
-                              value={lok.kode}
-                              className="text-xs text-white focus:bg-gray-800 focus:text-white"
-                            >
-                              {lok.kode} - {lok.nama}
-                            </SelectItem>
-                          ))}
+                          <div className="px-2 py-1.5 border-b border-gray-800" onPointerDown={(e) => e.stopPropagation()}>
+                            <input
+                              type="text"
+                              value={lokasiSearch}
+                              onChange={(e) => setLokasiSearch(e.target.value)}
+                              placeholder="Cari lokasi..."
+                              className="w-full px-2 py-1.5 text-xs bg-gray-900 border border-gray-700 text-white rounded focus:ring-1 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
+                              autoFocus
+                            />
+                          </div>
+                          {lokasiList
+                            .filter((lok) =>
+                              `${lok.kode} ${lok.nama}`.toLowerCase().includes(lokasiSearch.toLowerCase())
+                            )
+                            .map((lok) => (
+                              <SelectItem 
+                                key={lok.id} 
+                                value={lok.kode}
+                                className="text-xs text-white focus:bg-gray-800 focus:text-white"
+                              >
+                                {lok.kode} - {lok.nama}
+                              </SelectItem>
+                            ))}
+                          {lokasiList.filter((lok) =>
+                            `${lok.kode} ${lok.nama}`.toLowerCase().includes(lokasiSearch.toLowerCase())
+                          ).length === 0 && (
+                            <div className="px-3 py-4 text-xs text-gray-500 text-center">
+                              Tidak ada lokasi ditemukan
+                            </div>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
