@@ -1331,14 +1331,13 @@ const StokOpnam = () => {
                           <SelectValue placeholder="-- Pilih Lokasi --" />
                         </SelectTrigger>
                         <SelectContent className="bg-gray-950 border border-gray-800 text-white">
-                          <div className="sticky top-0 z-10 bg-gray-950 px-2 py-1.5 border-b border-gray-800" onPointerDownCapture={(e) => { e.stopPropagation(); e.preventDefault(); }}>
+                          <div className="sticky top-0 z-10 bg-gray-950 px-2 py-1.5 border-b border-gray-800" onPointerDownCapture={(e) => e.stopPropagation()}>
                             <input
                               type="text"
                               value={lokasiSearch}
                               onChange={(e) => setLokasiSearch(e.target.value)}
                               placeholder="Cari lokasi..."
                               className="w-full px-2 py-1.5 text-xs bg-gray-900 border border-gray-700 text-white rounded focus:ring-1 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
-                              autoFocus
                             />
                           </div>
                           {lokasiList
