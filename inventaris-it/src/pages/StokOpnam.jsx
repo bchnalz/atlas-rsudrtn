@@ -20,6 +20,14 @@ const StokOpnam = () => {
   const [jenisBarangList, setJenisBarangList] = useState([]);
   const [lokasiList, setLokasiList] = useState([]);
   const [lokasiSearch, setLokasiSearch] = useState('');
+  const lokasiSearchRef = useRef(null);
+
+  // Keep search input focused after each keystroke re-render inside SelectContent
+  useEffect(() => {
+    if (lokasiSearchRef.current && document.activeElement !== lokasiSearchRef.current) {
+      lokasiSearchRef.current.focus();
+    }
+  }, [lokasiSearch]);
   const [userCategory, setUserCategory] = useState(null);
   // Don't block initial render; load data after first paint
   const [loading, setLoading] = useState(false);
@@ -1333,6 +1341,7 @@ const StokOpnam = () => {
                         <SelectContent className="bg-gray-950 border border-gray-800 text-white max-h-[260px]">
                           <div className="sticky top-0 z-10 bg-gray-950 px-2 py-1.5 border-b border-gray-800" onPointerDownCapture={(e) => e.stopPropagation()}>
                             <input
+                              ref={lokasiSearchRef}
                               type="text"
                               value={lokasiSearch}
                               onChange={(e) => setLokasiSearch(e.target.value)}
