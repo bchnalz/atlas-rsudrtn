@@ -13,7 +13,7 @@ const MasterSKP = () => {
   const [editingId, setEditingId] = useState(null);
   const [selectedSKP, setSelectedSKP] = useState(null);
   const [currentYear] = useState(new Date().getFullYear());
-  
+
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -85,10 +85,10 @@ const MasterSKP = () => {
 
   const handleEdit = (item) => {
     setEditingId(item.id);
-    setForm({ 
-      name: item.name, 
-      description: item.description || '', 
-      is_active: item.is_active 
+    setForm({
+      name: item.name,
+      description: item.description || '',
+      is_active: item.is_active
     });
     setShowAddForm(true);
   };
@@ -99,7 +99,7 @@ const MasterSKP = () => {
       const trimmedName = form.name.trim();
 
       if (!trimmedName) {
-        toast.error('❌ Nama SKP tidak boleh kosong!');
+        toast.error('Nama SKP tidak boleh kosong!');
         return;
       }
 
@@ -120,7 +120,7 @@ const MasterSKP = () => {
           .maybeSingle();
 
         if (duplicate) {
-          toast.error(`❌ Nama SKP "${trimmedName}" sudah digunakan!`);
+          toast.error(`Nama SKP "${trimmedName}" sudah digunakan!`);
           return;
         }
 
@@ -130,7 +130,7 @@ const MasterSKP = () => {
           .eq('id', editingId);
 
         if (error) throw error;
-        toast.success('✅ SKP berhasil diupdate!');
+        toast.success('SKP berhasil diupdate!');
       } else {
         // Insert: Check if name already exists (case-insensitive)
         const { data: duplicate } = await supabase
@@ -140,7 +140,7 @@ const MasterSKP = () => {
           .maybeSingle();
 
         if (duplicate) {
-          toast.error(`❌ Nama SKP "${trimmedName}" sudah digunakan!`);
+          toast.error(`Nama SKP "${trimmedName}" sudah digunakan!`);
           return;
         }
 
@@ -149,7 +149,7 @@ const MasterSKP = () => {
           .insert([submitData]);
 
         if (error) throw error;
-        toast.success('✅ SKP berhasil ditambahkan!');
+        toast.success('SKP berhasil ditambahkan!');
       }
 
       setShowAddForm(false);
@@ -157,7 +157,7 @@ const MasterSKP = () => {
       setEditingId(null);
       fetchSKPCategories();
     } catch (error) {
-      toast.error('❌ Gagal menyimpan data: ' + error.message);
+      toast.error('Gagal menyimpan data: ' + error.message);
     }
   };
 
@@ -171,10 +171,10 @@ const MasterSKP = () => {
         .eq('id', id);
 
       if (error) throw error;
-      toast.success('✅ SKP berhasil dihapus!');
+      toast.success('SKP berhasil dihapus!');
       fetchSKPCategories();
     } catch (error) {
-      toast.error('❌ Gagal menghapus data: ' + error.message);
+      toast.error('Gagal menghapus data: ' + error.message);
     }
   };
 
@@ -221,12 +221,12 @@ const MasterSKP = () => {
         if (error) throw error;
       }
 
-      toast.success('✅ Target berhasil disimpan!');
+      toast.success('Target berhasil disimpan!');
       setShowTargetModal(false);
       setSelectedSKP(null);
       fetchSKPCategories();
     } catch (error) {
-      toast.error('❌ Gagal menyimpan target: ' + error.message);
+      toast.error('Gagal menyimpan target: ' + error.message);
     }
   };
 
@@ -251,14 +251,14 @@ const MasterSKP = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Master SKP</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-3xl font-bold text-white">Master SKP</h1>
+            <p className="mt-1 text-sm text-gray-400">
               Kelola kategori SKP (Sasaran Kerja Pegawai) dan target tahunan
             </p>
           </div>
           <button
             onClick={handleAdd}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-medium transition text-sm"
           >
             + Tambah SKP
           </button>
@@ -266,34 +266,34 @@ const MasterSKP = () => {
 
         {/* Form Modal */}
         {showAddForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+            <div className="bg-gray-950 rounded-xl shadow-2xl shadow-black/50 border border-gray-800 max-w-md w-full p-6">
+              <h2 className="text-lg font-bold text-white mb-4">
                 {editingId ? 'Edit SKP' : 'Tambah SKP'}
               </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nama SKP *
+                  <label className="block text-xs font-medium text-gray-400 mb-1">
+                    Nama SKP <span className="text-yellow-300">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
                     placeholder="Perbaikan Komputer"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-400 mb-1">
                     Deskripsi
                   </label>
                   <textarea
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
                     placeholder="Perbaikan hardware dan software komputer..."
                     rows="3"
                   />
@@ -305,9 +305,9 @@ const MasterSKP = () => {
                     id="is_active"
                     checked={form.is_active}
                     onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 bg-gray-950 border border-gray-700 rounded focus:ring-gray-600 text-blue-600"
                   />
-                  <label htmlFor="is_active" className="ml-2 text-sm text-gray-700">
+                  <label htmlFor="is_active" className="ml-2 text-xs text-gray-400">
                     Aktif
                   </label>
                 </div>
@@ -320,13 +320,13 @@ const MasterSKP = () => {
                       setEditingId(null);
                       setForm({ name: '', description: '', is_active: true });
                     }}
-                    className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                    className="px-5 py-2 border border-gray-700 rounded-lg text-sm text-gray-400 hover:bg-gray-800 transition"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    className="px-5 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-500 transition"
                   >
                     {editingId ? 'Update' : 'Simpan'}
                   </button>
@@ -338,20 +338,20 @@ const MasterSKP = () => {
 
         {/* Target Modal */}
         {showTargetModal && selectedSKP && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+            <div className="bg-gray-950 rounded-xl shadow-2xl shadow-black/50 border border-gray-800 max-w-md w-full p-6">
+              <h2 className="text-lg font-bold text-white mb-4">
                 Set Target SKP
               </h2>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                <p className="text-sm font-semibold text-blue-900">{selectedSKP.name}</p>
+              <div className="bg-gray-900 border border-gray-800 rounded-lg p-3 mb-4">
+                <p className="text-sm font-semibold text-white">{selectedSKP.name}</p>
                 {selectedSKP.description && (
-                  <p className="text-xs text-blue-700 mt-1">{selectedSKP.description}</p>
+                  <p className="text-xs text-gray-400 mt-1">{selectedSKP.description}</p>
                 )}
               </div>
               <form onSubmit={handleTargetSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs font-medium text-gray-400 mb-1">
                     Tahun
                   </label>
                   <input
@@ -361,13 +361,13 @@ const MasterSKP = () => {
                     max="2100"
                     value={targetForm.year}
                     onChange={(e) => setTargetForm({ ...targetForm, year: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Target Jumlah *
+                  <label className="block text-xs font-medium text-gray-400 mb-1">
+                    Target Jumlah <span className="text-yellow-300">*</span>
                   </label>
                   <input
                     type="number"
@@ -375,7 +375,7 @@ const MasterSKP = () => {
                     min="0"
                     value={targetForm.target_count}
                     onChange={(e) => setTargetForm({ ...targetForm, target_count: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 focus:border-transparent"
                     placeholder="250"
                   />
                   <p className="text-xs text-gray-500 mt-1">
@@ -390,13 +390,13 @@ const MasterSKP = () => {
                       setShowTargetModal(false);
                       setSelectedSKP(null);
                     }}
-                    className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                    className="px-5 py-2 border border-gray-700 rounded-lg text-sm text-gray-400 hover:bg-gray-800 transition"
                   >
                     Batal
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    className="px-5 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-500 transition"
                   >
                     Simpan Target
                   </button>
@@ -407,14 +407,14 @@ const MasterSKP = () => {
         )}
 
         {/* Info Card */}
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-start">
-            <ChartBarSquareIcon className="size-6 text-green-500 shrink-0 mt-0.5" />
+        <div className="bg-gray-950 border border-gray-800 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <ChartBarSquareIcon className="size-5 text-green-400 shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-semibold text-green-900 mb-1">
+              <h3 className="font-semibold text-sm text-white mb-1">
                 Sasaran Kerja Pegawai (SKP)
               </h3>
-              <p className="text-sm text-green-800">
+              <p className="text-xs text-gray-400">
                 SKP adalah kategori tugas yang harus dikerjakan. Setiap SKP memiliki target tahunan yang dapat diatur administrator.
               </p>
             </div>
@@ -422,37 +422,37 @@ const MasterSKP = () => {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+        <div className="bg-gray-950 rounded-xl border border-gray-800 overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-800">
+            <thead>
+              <tr className="bg-gray-900">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                   Nama SKP
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                   Target {currentYear}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                   Aksi
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-800">
               {skpCategories.map((item) => (
-                <tr key={item.id} className="group hover:bg-gray-700 transition-colors">
+                <tr key={item.id} className="hover:bg-gray-900/50 transition-colors">
                   <td className="px-6 py-4">
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{item.name}</p>
+                      <p className="text-sm font-semibold text-white">{item.name}</p>
                       {item.description && (
-                        <p className="text-xs text-gray-500 mt-1">{item.description}</p>
+                        <p className="text-xs text-gray-400 mt-1">{item.description}</p>
                       )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-lg font-bold text-green-600">
+                    <span className="text-lg font-bold text-green-400">
                       {getCurrentYearTarget(item)}x
                     </span>
                   </td>
@@ -460,8 +460,8 @@ const MasterSKP = () => {
                     <span
                       className={`px-2 py-1 text-xs font-semibold rounded-full ${
                         item.is_active
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
+                          ? 'bg-green-950/50 text-green-400 border border-green-800'
+                          : 'bg-gray-800 text-gray-400 border border-gray-700'
                       }`}
                     >
                       {item.is_active ? 'Aktif' : 'Nonaktif'}
@@ -470,19 +470,19 @@ const MasterSKP = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
                     <button
                       onClick={() => handleSetTarget(item)}
-                      className="text-green-600 hover:text-green-900"
+                      className="text-green-400 hover:text-green-300 transition"
                     >
                       <ChartBarSquareIcon className="size-3.5 inline mr-1" /> Target
                     </button>
                     <button
                       onClick={() => handleEdit(item)}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-blue-400 hover:text-blue-300 transition"
                     >
                       <PencilSquareIcon className="size-3.5 inline mr-1" /> Edit
                     </button>
                     <button
                       onClick={() => handleDelete(item.id, item.name)}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-red-400 hover:text-red-300 transition"
                     >
                       <TrashIcon className="size-3.5 inline mr-1" /> Hapus
                     </button>
@@ -494,8 +494,7 @@ const MasterSKP = () => {
 
           {skpCategories.length === 0 && (
             <div className="text-center py-12 text-gray-500">
-              <p className="text-lg">Belum ada data SKP</p>
-              <p className="text-sm mt-2">Klik tombol "Tambah SKP" untuk memulai</p>
+              <p className="text-sm">Belum ada data SKP</p>
             </div>
           )}
         </div>
