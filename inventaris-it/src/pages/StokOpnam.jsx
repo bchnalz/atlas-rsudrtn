@@ -20,6 +20,14 @@ const StokOpnam = () => {
   const [jenisBarangList, setJenisBarangList] = useState([]);
   const [lokasiList, setLokasiList] = useState([]);
   const [lokasiSearch, setLokasiSearch] = useState('');
+  const lokasiSearchRef = useRef(null);
+
+  // Keep search input focused after each keystroke re-render inside SelectContent
+  useEffect(() => {
+    if (lokasiSearchRef.current && document.activeElement !== lokasiSearchRef.current) {
+      lokasiSearchRef.current.focus();
+    }
+  }, [lokasiSearch]);
   const [userCategory, setUserCategory] = useState(null);
   // Don't block initial render; load data after first paint
   const [loading, setLoading] = useState(false);
@@ -37,6 +45,7 @@ const StokOpnam = () => {
   const [editForm, setEditForm] = useState({});
   const [showAddForm, setShowAddForm] = useState(false);
   const [isAddFormClosing, setIsAddFormClosing] = useState(false); // Animation state
+  const [showLokasiPicker, setShowLokasiPicker] = useState(false);
   const [addStep, setAddStep] = useState(1); // Step 1 or 2
   const [newPerangkatId, setNewPerangkatId] = useState(null); // ID yang baru dibuat
   const [generatedIdPerangkat, setGeneratedIdPerangkat] = useState(''); // ID Perangkat string
@@ -717,6 +726,11 @@ const StokOpnam = () => {
   useEffect(() => {
     const handleEscKey = (event) => {
       if (event.key === 'Escape') {
+        if (showLokasiPicker) {
+          setShowLokasiPicker(false);
+          setLokasiSearch('');
+          return;
+        }
         if (showAddForm) {
           if (addStep === 1) {
             setShowAddForm(false);
@@ -760,13 +774,13 @@ const StokOpnam = () => {
       }
     };
 
-    if (showAddForm || viewingDetail || showMutasiModal || editingId) {
+    if (showAddForm || showLokasiPicker || viewingDetail || showMutasiModal || editingId) {
       document.addEventListener('keydown', handleEscKey);
       return () => {
         document.removeEventListener('keydown', handleEscKey);
       };
     }
-  }, [showAddForm, viewingDetail, showMutasiModal, editingId, addStep, isDetailClosing]);
+  }, [showAddForm, showLokasiPicker, viewingDetail, showMutasiModal, editingId, addStep, isDetailClosing]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -1002,6 +1016,8 @@ const StokOpnam = () => {
         return;
       }
     }
+    setShowLokasiPicker(false);
+    setLokasiSearch('');
     setIsAddFormClosing(true);
     setTimeout(() => {
       setShowAddForm(false);
@@ -1319,50 +1335,85 @@ const StokOpnam = () => {
                       <label className="block text-xs font-medium text-gray-400 mb-1">
                         Lokasi <span className="text-yellow-300">*</span>
                       </label>
-                      <Select
-                        value={step1Form.lokasi_kode}
-                        onValueChange={(value) => {
-                          setStep1Form({ ...step1Form, lokasi_kode: value });
+                      <button
+                        type="button"
+                        onClick={() => {
                           setLokasiSearch('');
+                          setShowLokasiPicker(true);
                         }}
-                        onOpenChange={(open) => { if (!open) setLokasiSearch(''); }}
+                        className="w-full h-9 px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600 text-left flex items-center justify-between"
                       >
-                        <SelectTrigger className="w-full h-9 px-3 py-2 text-xs bg-gray-950 border border-gray-800 text-white rounded-lg focus:ring-2 focus:ring-gray-600">
-                          <SelectValue placeholder="-- Pilih Lokasi --" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-gray-950 border border-gray-800 text-white">
-                          <div className="px-2 py-1.5 border-b border-gray-800" onPointerDown={(e) => e.stopPropagation()}>
-                            <input
-                              type="text"
-                              value={lokasiSearch}
-                              onChange={(e) => setLokasiSearch(e.target.value)}
-                              placeholder="Cari lokasi..."
-                              className="w-full px-2 py-1.5 text-xs bg-gray-900 border border-gray-700 text-white rounded focus:ring-1 focus:ring-gray-600 focus:border-transparent placeholder-gray-500"
-                              autoFocus
-                            />
-                          </div>
-                          {lokasiList
-                            .filter((lok) =>
-                              `${lok.kode} ${lok.nama}`.toLowerCase().includes(lokasiSearch.toLowerCase())
-                            )
-                            .map((lok) => (
-                              <SelectItem 
-                                key={lok.id} 
-                                value={lok.kode}
-                                className="text-xs text-white focus:bg-gray-800 focus:text-white"
+                        <span className={step1Form.lokasi_kode ? 'text-white' : 'text-gray-500'}>
+                          {step1Form.lokasi_kode
+                            ? (() => {
+                                const selected = lokasiList.find((l) => l.kode === step1Form.lokasi_kode);
+                                return selected ? `${selected.kode} - ${selected.nama}` : step1Form.lokasi_kode;
+                              })()
+                            : '-- Pilih Lokasi --'}
+                        </span>
+                        <span className="ml-2 opacity-50">▼</span>
+                      </button>
+
+                      {showLokasiPicker && (
+                        <div className="fixed inset-0 z-[99999] flex items-center justify-center">
+                          <div className="absolute inset-0 bg-black/60" onClick={() => { setShowLokasiPicker(false); setLokasiSearch(''); }} />
+                          <div className="relative bg-gray-950 border border-gray-700 rounded-xl shadow-2xl w-[400px] max-w-[90vw] max-h-[80vh] flex flex-col">
+                            <div className="flex items-center justify-between p-3 border-b border-gray-800 shrink-0">
+                              <h3 className="text-sm font-semibold text-white">Pilih Lokasi</h3>
+                              <button
+                                type="button"
+                                onClick={() => { setShowLokasiPicker(false); setLokasiSearch(''); }}
+                                className="text-gray-400 hover:text-white transition"
                               >
-                                {lok.kode} - {lok.nama}
-                              </SelectItem>
-                            ))}
-                          {lokasiList.filter((lok) =>
-                            `${lok.kode} ${lok.nama}`.toLowerCase().includes(lokasiSearch.toLowerCase())
-                          ).length === 0 && (
-                            <div className="px-3 py-4 text-xs text-gray-500 text-center">
-                              Tidak ada lokasi ditemukan
+                                <XMarkIcon className="h-4 w-4" />
+                              </button>
                             </div>
-                          )}
-                        </SelectContent>
-                      </Select>
+                            <div className="p-3 border-b border-gray-800 shrink-0">
+                              <input
+                                autoFocus
+                                type="text"
+                                value={lokasiSearch}
+                                onChange={(e) => setLokasiSearch(e.target.value)}
+                                placeholder="Ketik untuk mencari lokasi..."
+                                className="w-full px-3 py-2 text-xs bg-gray-900 border border-gray-700 text-white rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-transparent placeholder-gray-500"
+                              />
+                            </div>
+                            <div className="overflow-y-auto modern-scrollbar" style={{ maxHeight: '12rem' }}>
+                              {lokasiList
+                                .filter((lok) =>
+                                  `${lok.kode} ${lok.nama}`.toLowerCase().includes(lokasiSearch.toLowerCase())
+                                )
+                                .map((lok, idx) => (
+                                  <button
+                                    key={lok.id || idx}
+                                    type="button"
+                                    onClick={() => {
+                                      setStep1Form({ ...step1Form, lokasi_kode: lok.kode });
+                                      setShowLokasiPicker(false);
+                                      setLokasiSearch('');
+                                    }}
+                                    className={`w-full text-left px-4 py-2.5 text-xs transition-colors ${
+                                      step1Form.lokasi_kode === lok.kode
+                                        ? 'bg-blue-600/20 text-blue-300'
+                                        : 'text-gray-300 hover:bg-gray-800'
+                                    }`}
+                                  >
+                                    <span className="font-mono text-blue-300">{lok.kode}</span>
+                                    <span className="mx-2 text-gray-600">-</span>
+                                    {lok.nama}
+                                  </button>
+                                ))}
+                              {lokasiList.filter((lok) =>
+                                `${lok.kode} ${lok.nama}`.toLowerCase().includes(lokasiSearch.toLowerCase())
+                              ).length === 0 && (
+                                <div className="px-4 py-8 text-xs text-gray-500 text-center">
+                                  Tidak ada lokasi ditemukan
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </form>
                 )}
