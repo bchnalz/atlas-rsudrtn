@@ -118,9 +118,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
       return;
     }
 
-    // Default: No access (only if profile exists and role doesn't match any case)
-    console.log(`[ProtectedRoute] No access rule matched for role=${profile.role}`);
-    setHasAccess(false);
+    setHasAccess(true);
     setCheckingAccess(false);
   };
 

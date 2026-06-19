@@ -71,6 +71,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { signIn, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -196,6 +197,7 @@ const Login = () => {
       
       setEmail('');
       setPassword('');
+      setDialogOpen(false);
       setDrawerOpen(false);
       setLoading(false);
     } catch (error) {
@@ -423,7 +425,7 @@ const Login = () => {
         <div className="container mx-auto flex items-center justify-center">
           {/* Desktop: Dialog */}
           <div className="hidden sm:block">
-            <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-zinc-100 text-zinc-900 hover:bg-zinc-200 px-8">
                   Sign In
