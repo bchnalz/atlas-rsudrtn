@@ -16,6 +16,8 @@ const StokOpnam = () => {
   const { profile } = useAuth();
   const toast = useToast();
   const [perangkat, setPerangkat] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [jenisPerangkatList, setJenisPerangkatList] = useState([]);
   const [jenisBarangList, setJenisBarangList] = useState([]);
   const [lokasiList, setLokasiList] = useState([]);
@@ -30,7 +32,6 @@ const StokOpnam = () => {
   }, [lokasiSearch]);
   const [userCategory, setUserCategory] = useState(null);
   // Don't block initial render; load data after first paint
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [columnFilters, setColumnFilters] = useState({
     nama_perangkat: '',
@@ -55,9 +56,9 @@ const StokOpnam = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   
-  // Sorting state - default to id_perangkat (sequence number) descending
-  const [sortColumn, setSortColumn] = useState('id_perangkat');
-  const [sortDirection, setSortDirection] = useState('desc'); // 'asc' or 'desc' - desc shows highest first
+  // Sorting state - default to tanggal_entry descending (latest data first)
+  const [sortColumn, setSortColumn] = useState('tanggal_entry');
+  const [sortDirection, setSortDirection] = useState('desc'); // 'asc' or 'desc' - desc shows newest first
   
   // Detail view state
   const [viewingDetail, setViewingDetail] = useState(null);
@@ -161,7 +162,6 @@ const StokOpnam = () => {
 
     const cancel = runAfterPaint(() => {
       fetchMasterData();
-      fetchPerangkat();
     });
 
     return cancel;
@@ -237,51 +237,78 @@ const StokOpnam = () => {
   const fetchPerangkat = async () => {
     try {
       setLoading(true);
-      console.log('[StokOpnam] Starting fetchPerangkat...');
       const startTime = performance.now();
-      
-      // Use single optimized query - Supabase handles joins efficiently
-      // This is faster than multiple queries because:
-      // 1. Single round-trip to database
-      // 2. Database optimizes the join internally
-      // 3. Less RLS policy checks (one query vs many)
-      const { data, error } = await supabase
+
+      const SELECT_COLUMNS = `
+        id,
+        id_perangkat,
+        nama_perangkat,
+        jenis_perangkat_kode,
+        jenis_barang_id,
+        lokasi_kode,
+        serial_number,
+        merk,
+        id_remoteaccess,
+        spesifikasi_processor,
+        kapasitas_ram,
+        mac_ethernet,
+        mac_wireless,
+        ip_ethernet,
+        ip_wireless,
+        serial_number_monitor,
+        tanggal_entry,
+        status_perangkat,
+        petugas_id,
+        jenis_perangkat:ms_jenis_perangkat!perangkat_jenis_perangkat_kode_fkey(kode, nama),
+        jenis_barang:ms_jenis_barang!perangkat_jenis_barang_id_fkey(id, nama),
+        lokasi:ms_lokasi!perangkat_lokasi_kode_fkey(kode, nama),
+        petugas:profiles!perangkat_petugas_id_fkey(id, full_name),
+        perangkat_storage(id, jenis_storage, kapasitas)
+      `;
+
+      let query = supabase
         .from('perangkat')
-        .select(`
-          id,
-          id_perangkat,
-          nama_perangkat,
-          jenis_perangkat_kode,
-          jenis_barang_id,
-          lokasi_kode,
-          serial_number,
-          merk,
-          id_remoteaccess,
-          spesifikasi_processor,
-          kapasitas_ram,
-          mac_ethernet,
-          mac_wireless,
-          ip_ethernet,
-          ip_wireless,
-          serial_number_monitor,
-          tanggal_entry,
-          status_perangkat,
-          petugas_id,
-          jenis_perangkat:ms_jenis_perangkat!perangkat_jenis_perangkat_kode_fkey(kode, nama),
-          jenis_barang:ms_jenis_barang!perangkat_jenis_barang_id_fkey(id, nama),
-          lokasi:ms_lokasi!perangkat_lokasi_kode_fkey(kode, nama),
-          petugas:profiles!perangkat_petugas_id_fkey(id, full_name),
-          perangkat_storage(id, jenis_storage, kapasitas)
-        `)
-        .limit(1000); // Reasonable limit to prevent slow queries
-        // Note: Sorting is done in frontend by sequence number (last 4 digits of id_perangkat)
+        .select(SELECT_COLUMNS, { count: 'exact' });
+
+      // --- Server-side global search ---
+      if (searchTerm) {
+        const t = `%${searchTerm}%`;
+        query = query.or(
+          `id_perangkat.ilike.${t},nama_perangkat.ilike.${t},merk.ilike.${t},serial_number.ilike.${t},ip_ethernet.ilike.${t},ip_wireless.ilike.${t}`
+        );
+      }
+
+      // --- Server-side sort (direct columns only; joined-table columns sort client-side) ---
+      const SERVER_SORT_COLUMNS = {
+        id_perangkat: 'id_perangkat',
+        nama_perangkat: 'nama_perangkat',
+        tanggal_entry: 'tanggal_entry',
+      };
+      if (SERVER_SORT_COLUMNS[sortColumn]) {
+        query = query.order(SERVER_SORT_COLUMNS[sortColumn], { ascending: sortDirection === 'asc' });
+      }
+
+      // --- Server-side pagination ---
+      if (itemsPerPage !== 'all') {
+        const from = (currentPage - 1) * itemsPerPage;
+        const to = from + itemsPerPage - 1;
+        query = query.range(from, to);
+      }
+
+      const { data, error, count } = await query;
 
       if (error) throw error;
 
       const endTime = performance.now();
-      console.log(`[StokOpnam] ✅ fetchPerangkat completed in ${(endTime - startTime).toFixed(2)}ms, ${data?.length || 0} records`);
-      
+      console.log(
+        `[StokOpnam] fetchPerangkat completed in ${(endTime - startTime).toFixed(2)}ms, ` +
+        `${data?.length || 0} of ${count ?? '?'} records (page ${currentPage}, size ${itemsPerPage})`
+      );
+
       setPerangkat(data || []);
+      if (count !== null && count !== undefined) {
+        setTotalCount(count);
+      }
     } catch (error) {
       console.error('[StokOpnam] Error fetching perangkat:', error.message);
       toast.error('❌ Gagal memuat data perangkat: ' + error.message);
@@ -651,29 +678,16 @@ const StokOpnam = () => {
     return true;
   });
 
-  // Sorting logic
-  const sortedPerangkat = [...filteredPerangkat].sort((a, b) => {
+  // Sorting logic — columns handled server-side are skipped here
+  const SERVER_SORTED_COLUMNS = ['id_perangkat', 'nama_perangkat', 'tanggal_entry'];
+  const sortedPerangkat = SERVER_SORTED_COLUMNS.includes(sortColumn)
+    ? filteredPerangkat
+    : [...filteredPerangkat].sort((a, b) => {
     if (!sortColumn) return 0;
 
     let aValue, bValue;
 
     switch (sortColumn) {
-      case 'id_perangkat':
-        // Extract sequence number (last 4 digits) from id_perangkat
-        // Format: XXX.YYYY.M.ZZZZ where ZZZZ is the sequence
-        const aSeq = a.id_perangkat ? parseInt(a.id_perangkat.split('.').pop() || '0', 10) : 0;
-        const bSeq = b.id_perangkat ? parseInt(b.id_perangkat.split('.').pop() || '0', 10) : 0;
-        aValue = aSeq;
-        bValue = bSeq;
-        break;
-      case 'nama_perangkat':
-        aValue = a.nama_perangkat || '';
-        bValue = b.nama_perangkat || '';
-        break;
-      case 'tanggal_entry':
-        aValue = new Date(a.tanggal_entry || 0);
-        bValue = new Date(b.tanggal_entry || 0);
-        break;
       case 'petugas':
         aValue = a.petugas?.full_name || '';
         bValue = b.petugas?.full_name || '';
@@ -690,23 +704,25 @@ const StokOpnam = () => {
         return 0;
     }
 
-    // Compare values
     if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
     if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
     return 0;
   });
 
-  // Pagination logic
+  // Pagination logic (server-side: perangkat already contains the current page)
   const isShowingAll = itemsPerPage === 'all';
-  const totalPages = isShowingAll ? 1 : Math.ceil(sortedPerangkat.length / itemsPerPage);
-  const startIndex = isShowingAll ? 0 : (currentPage - 1) * itemsPerPage;
-  const endIndex = isShowingAll ? sortedPerangkat.length : startIndex + itemsPerPage;
-  const paginatedPerangkat = sortedPerangkat.slice(startIndex, endIndex);
+  const totalPages = isShowingAll ? 1 : Math.max(1, Math.ceil(totalCount / itemsPerPage));
+  const paginatedPerangkat = sortedPerangkat;
 
   // Reset to page 1 when search or itemsPerPage changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, itemsPerPage]);
+
+  // Re-fetch data when pagination, sort, or search changes (fires on initial mount too)
+  useEffect(() => {
+    fetchPerangkat();
+  }, [currentPage, itemsPerPage, sortColumn, sortDirection, searchTerm]);
 
   // Close header dropdown when clicking outside
   useEffect(() => {
@@ -2583,46 +2599,6 @@ const StokOpnam = () => {
 
         {/* Table - Desktop View */}
         <div className="bg-transparent rounded-md overflow-hidden">
-          {loading ? (
-            <>
-              {/* Desktop Skeleton */}
-              <div className="hidden lg:block">
-                <table className="min-w-full" style={{ fontFamily: "'Open Sans', sans-serif" }}>
-                  <thead className="bg-transparent">
-                    <tr>
-                      {['ID Perangkat','Nama Perangkat','ID Remote','Tanggal Entry','Petugas','Jenis Perangkat','Jenis Barang','Status'].map((h) => (
-                        <th key={h} className="px-3 py-2 text-center text-xs font-medium text-gray-400 uppercase whitespace-nowrap">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#1a1a1a]">
-                    {Array.from({ length: 12 }).map((_, i) => (
-                      <tr key={i}>
-                        {Array.from({ length: 8 }).map((_, j) => (
-                          <td key={j} className="px-3 py-3">
-                            <div className="h-4 bg-[#1a1a1a] rounded animate-pulse" style={{ width: j === 1 ? '120px' : j === 7 ? '24px' : '80px', margin: '0 auto' }} />
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {/* Mobile Skeleton */}
-              <div className="lg:hidden divide-y divide-[#1a1a1a]">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="px-3 py-2.5 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="h-4 w-36 bg-[#1a1a1a] rounded animate-pulse" />
-                      <div className="h-3.5 w-20 bg-[#1a1a1a] rounded animate-pulse" />
-                    </div>
-                    <div className="h-3 w-24 bg-[#1a1a1a] rounded animate-pulse" />
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <>
           <div className="hidden lg:flex lg:justify-center overflow-x-auto">
             <table className="w-auto" style={{ fontFamily: "'Open Sans', sans-serif" }}>
               <thead className="bg-transparent">
@@ -2721,11 +2697,8 @@ const StokOpnam = () => {
               </div>
             ))}
           </div>
-            </>
-          )}
 
-
-          {!loading && filteredPerangkat.length === 0 && (
+          {filteredPerangkat.length === 0 && (
             <div className="text-center py-12 text-gray-400">
               <p className="text-lg">Tidak ada data ditemukan</p>
             </div>
